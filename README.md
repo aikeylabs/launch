@@ -14,9 +14,13 @@
 
 ### 1. 一键导入 KEY 与账号
 
-AiKey 支持导入 API Key 和 OAuth 账号，统一保存在本地或团队 Vault 中。真实凭证不需要暴露给终端、脚本或第三方客户端；日常使用只分发可控的路由 token 或当前 active 绑定。
+**Why：**
 
-**怎么用：**
+团队里常见的麻烦不是没有 KEY，而是 KEY 散落在终端环境变量、脚本、个人电脑和第三方客户端里。复制一次就多一个泄漏点，换人、换机器、换额度时也很难确认谁还在用哪一份真实凭证。
+
+**How：**
+
+AiKey 支持导入 API Key 和 OAuth 账号，统一保存在本地或团队 Vault 中。真实凭证不需要暴露给终端、脚本或第三方客户端；日常使用只分发可控的路由 token 或当前 active 绑定。
 
 ```bash
 aikey add anthropic:work        # 导入 Claude API Key
@@ -28,13 +32,17 @@ aikey use                       # 选择当前使用的 KEY / 账号
 
 ![AiKey Vault routing](assets/aikey-vault-routing-minimal.png)
 
-敏感凭证集中保管，工作入口自由分发。
+**What：敏感凭证集中保管，工作入口自由分发。**
 
 ### 2. 用量趋势与 token 成本洞察
 
-控制台可查看每个 KEY、账号、协议的用量趋势，帮助团队定位高频使用来源。结合 token 使用结构，例如 cache token 占比、请求量和 provider 分布，可以辅助发布前后做费用复盘与成本优化。
+**Why：**
 
-**怎么用：**
+AI 成本最容易在日常协作里变成一笔糊涂账：谁在高频调用、哪个账号突然变贵、发布前后 token 是否异常增长，往往要到账单出来后才发现。没有趋势和结构，就很难把优化变成日常动作。
+
+**How：**
+
+控制台可查看每个 KEY、账号、协议的用量趋势，帮助团队定位高频使用来源。结合 token 使用结构，例如 cache token 占比、请求量和 provider 分布，可以辅助发布前后做费用复盘与成本优化。
 
 ```bash
 aikey web                       # 打开控制台查看 Vault、用量和 token 结构
@@ -42,13 +50,17 @@ aikey web                       # 打开控制台查看 Vault、用量和 token 
 
 ![AiKey usage dashboard](assets/aikey-usage-dashboard-minimal.png)
 
-不只会用 KEY，还能看懂 KEY 怎么被用。
+**What：不只会用 KEY，还能看懂 KEY 怎么被用。**
 
 ### 3. 多窗口、多应用、多账号同时工作
 
-AiKey 支持 Claude、Codex、Kimi 等不同 CLI，也支持 Cursor、OpenCode、Continue 等第三方客户端。多个终端窗口可以使用不同账号或临时激活不同 KEY，让研发、测试、脚本和个人探索互不干扰。
+**Why：**
 
-**怎么用：**
+真实工作流很少只开一个 AI 工具：一个窗口在跑 Claude，一个编辑器在补代码，一个脚本在批量处理。所有工具共享同一组环境变量时，账号很容易互相抢占，测试、开发和自动化任务也会彼此干扰。
+
+**How：**
+
+AiKey 支持 Claude、Codex、Kimi 等不同 CLI，也支持 Cursor、OpenCode、Continue 等第三方客户端。多个终端窗口可以使用不同账号或临时激活不同 KEY，让研发、测试、脚本和个人探索互不干扰。
 
 ```bash
 claude                          # 窗口 A：Claude
@@ -61,13 +73,17 @@ claude
 
 ![AiKey multi-workflow routing](assets/aikey-multi-workflows-minimal.png)
 
-一个工作站，同时跑多个 AI 工作流。
+**What：一个工作站，同时跑多个 AI 工作流。**
 
 ### 4. 额度不足时无缝切换账号
 
-当当前 Claude 账号或 KEY 额度不足时，用户不需要退出正在运行的 `claude` 会话。执行 `aikey use <另一个账号>` 后，运行中的会话会在下一次请求使用新的 active 绑定继续工作。
+**Why：**
 
-**怎么用：**
+最影响心流的不是额度不足本身，而是额度在长对话、代码审查或排障中途突然耗尽。重新登录、重启 CLI、复制上下文都会打断思路，也可能让还没完成的任务丢掉节奏。
+
+**How：**
+
+当当前 Claude 账号或 KEY 额度不足时，用户不需要退出正在运行的 `claude` 会话。执行 `aikey use <另一个账号>` 后，运行中的会话会在下一次请求使用新的 active 绑定继续工作。
 
 ```bash
 aikey use backup-account        # 不退出当前 claude，会话继续使用新账号
@@ -75,13 +91,17 @@ aikey use backup-account        # 不退出当前 claude，会话继续使用新
 
 ![AiKey quota switch](assets/aikey-quota-switch-minimal.png)
 
-额度用完，不打断思路。
+**What：额度用完，不打断思路。**
 
 ### 5. 自定义路由与多模型编排
 
-通过 `aikey route` 输出的 `base_url` 和 `api_key`，用户可以把多个 Claude、Kimi、Codex 或 OpenAI 兼容账号接入自己的客户端、脚本或网关。高级用户可以在此基础上开发自己的路由策略，按模型、任务、额度或成本编排账号使用。
+**Why：**
 
-**怎么用：**
+当团队同时使用多个模型和多个账号时，真正复杂的是选择：代码任务该走哪个模型，批处理该避开哪个贵账号，主账号不可用时如何自动兜底。如果每个客户端都单独配置，路由策略会很快失控。
+
+**How：**
+
+通过 `aikey route` 输出的 `base_url` 和 `api_key`，用户可以把多个 Claude、Kimi、Codex 或 OpenAI 兼容账号接入自己的客户端、脚本或网关。高级用户可以在此基础上开发自己的路由策略，按模型、任务、额度或成本编排账号使用。
 
 ```bash
 aikey route                     # 查看所有可用路由
@@ -90,7 +110,7 @@ aikey route work                # 复制指定 KEY 的 base_url + api_key
 
 ![AiKey custom routing](assets/aikey-custom-routing-minimal.png)
 
-把多个 AI 账号，编排成一套可控路由。
+**What：把多个 AI 账号，编排成一套可控路由。**
 
 
 
