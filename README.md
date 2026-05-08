@@ -1,3 +1,101 @@
+# AiKey Production 产品亮点
+
+> 把 Claude、Codex、Kimi 的 KEY、账号与路由统一管理，让团队在不中断工作的情况下切换额度、观察成本、编排多模型生产力。
+
+## 宣传语
+
+- 一处导入，处处可用。
+- 保密凭证留在 Vault，自由使用交给路由 KEY。
+- 额度不中断，账号无缝切。
+- 看清每个 KEY 的用量趋势，把 token 成本优化到日常工作流里。
+- 自定义 AI 路由，把 Claude、Kimi、Codex 编排成一个稳定工作台。
+
+## 核心亮点
+
+### 1. 一键导入 KEY 与账号
+
+AiKey 支持导入 API Key 和 OAuth 账号，统一保存在本地或团队 Vault 中。真实凭证不需要暴露给终端、脚本或第三方客户端；日常使用只分发可控的路由 token 或当前 active 绑定。
+
+**怎么用：**
+
+```bash
+aikey add anthropic:work        # 导入 Claude API Key
+aikey web --import              # 或在 Web 端一键导入
+
+aikey auth login claude         # 或登录 Claude 账号
+aikey use                       # 选择当前使用的 KEY / 账号
+```
+
+**适合表达：** "敏感凭证集中保管，工作入口自由分发。"
+
+**配图建议：** 左侧是 Claude / Kimi / Codex / OpenAI 等账号与 KEY，汇入中间的 AiKey Vault；右侧输出 CLI、Cursor、OpenCode、脚本任务等使用入口。突出"真实 KEY 不外泄，使用入口可复制"。
+
+### 2. 用量趋势与 token 成本洞察
+
+控制台可查看每个 KEY、账号、协议的用量趋势，帮助团队定位高频使用来源。结合 token 使用结构，例如 cache token 占比、请求量和 provider 分布，可以辅助发布前后做费用复盘与成本优化。
+
+**怎么用：**
+
+```bash
+aikey web                       # 打开控制台查看 Vault、用量和 token 结构
+```
+
+**适合表达：** "不只会用 KEY，还能看懂 KEY 怎么被用。"
+
+**配图建议：** 使用仪表盘风格：趋势折线、按 provider 分组的用量柱状图、cache token 占比卡片，以及"成本优化"提示标签。
+
+### 3. 多窗口、多应用、多账号同时工作
+
+AiKey 支持 Claude、Codex、Kimi 等不同 CLI，也支持 Cursor、OpenCode、Continue 等第三方客户端。多个终端窗口可以使用不同账号或临时激活不同 KEY，让研发、测试、脚本和个人探索互不干扰。
+
+**怎么用：**
+
+```bash
+claude                          # 窗口 A：Claude
+codex                           # 窗口 B：Codex
+kimi                            # 窗口 C：Kimi
+
+aikey activate claude2          # 窗口 D：同时使用 claude2 账号
+claude
+```
+
+**适合表达：** "一个工作站，同时跑多个 AI 工作流。"
+
+**配图建议：** 三列并排展示：终端里的 `claude`，编辑器里的 Cursor，后台脚本任务；每列连接到不同账号或 provider，底部统一经过 AiKey Proxy。
+
+### 4. 额度不足时无缝切换账号
+
+当当前 Claude 账号或 KEY 额度不足时，用户不需要退出正在运行的 `claude` 会话。执行 `aikey use <另一个账号>` 后，运行中的会话会在下一次请求使用新的 active 绑定继续工作。
+
+**怎么用：**
+
+```bash
+aikey use backup-account        # 不退出当前 claude，会话继续使用新账号
+```
+
+**适合表达：** "额度用完，不打断思路。"
+
+**配图建议：** 展示正在进行的 Claude 会话，旁边弹出"Quota low"提示；用户在另一个终端执行 `aikey use backup-account`，会话继续输出，形成"不中断切换"的对比。
+
+### 5. 自定义路由与多模型编排
+
+通过 `aikey route` 输出的 `base_url` 和 `api_key`，用户可以把多个 Claude、Kimi、Codex 或 OpenAI 兼容账号接入自己的客户端、脚本或网关。高级用户可以在此基础上开发自己的路由策略，按模型、任务、额度或成本编排账号使用。
+
+**怎么用：**
+
+```bash
+aikey route                     # 查看所有可用路由
+aikey route work                # 复制指定 KEY 的 base_url + api_key
+```
+
+**适合表达：** "把多个 AI 账号，编排成一套可控路由。"
+
+**配图建议：** 使用路由编排图：上层是任务类型，例如 coding、review、batch、fallback；中层是自定义策略；下层连接 Claude / Kimi / Codex 多账号池。
+
+
+
+
+
 # aikey 快速开始
 
 ---
