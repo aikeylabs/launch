@@ -26,9 +26,9 @@ aikey auth login claude         # 或登录 Claude 账号
 aikey use                       # 选择当前使用的 KEY / 账号
 ```
 
-**适合表达：** "敏感凭证集中保管，工作入口自由分发。"
+![AiKey Vault routing](assets/aikey-vault-routing-minimal.png)
 
-**配图建议：** 左侧是 Claude / Kimi / Codex / OpenAI 等账号与 KEY，汇入中间的 AiKey Vault；右侧输出 CLI、Cursor、OpenCode、脚本任务等使用入口。突出"真实 KEY 不外泄，使用入口可复制"。
+敏感凭证集中保管，工作入口自由分发。
 
 ### 2. 用量趋势与 token 成本洞察
 
@@ -40,9 +40,9 @@ aikey use                       # 选择当前使用的 KEY / 账号
 aikey web                       # 打开控制台查看 Vault、用量和 token 结构
 ```
 
-**适合表达：** "不只会用 KEY，还能看懂 KEY 怎么被用。"
+![AiKey usage dashboard](assets/aikey-usage-dashboard-minimal.png)
 
-**配图建议：** 使用仪表盘风格：趋势折线、按 provider 分组的用量柱状图、cache token 占比卡片，以及"成本优化"提示标签。
+不只会用 KEY，还能看懂 KEY 怎么被用。
 
 ### 3. 多窗口、多应用、多账号同时工作
 
@@ -59,9 +59,9 @@ aikey activate claude2          # 窗口 D：同时使用 claude2 账号
 claude
 ```
 
-**适合表达：** "一个工作站，同时跑多个 AI 工作流。"
+![AiKey multi-workflow routing](assets/aikey-multi-workflows-minimal.png)
 
-**配图建议：** 三列并排展示：终端里的 `claude`，编辑器里的 Cursor，后台脚本任务；每列连接到不同账号或 provider，底部统一经过 AiKey Proxy。
+一个工作站，同时跑多个 AI 工作流。
 
 ### 4. 额度不足时无缝切换账号
 
@@ -73,9 +73,9 @@ claude
 aikey use backup-account        # 不退出当前 claude，会话继续使用新账号
 ```
 
-**适合表达：** "额度用完，不打断思路。"
+![AiKey quota switch](assets/aikey-quota-switch-minimal.png)
 
-**配图建议：** 展示正在进行的 Claude 会话，旁边弹出"Quota low"提示；用户在另一个终端执行 `aikey use backup-account`，会话继续输出，形成"不中断切换"的对比。
+额度用完，不打断思路。
 
 ### 5. 自定义路由与多模型编排
 
@@ -88,9 +88,9 @@ aikey route                     # 查看所有可用路由
 aikey route work                # 复制指定 KEY 的 base_url + api_key
 ```
 
-**适合表达：** "把多个 AI 账号，编排成一套可控路由。"
+![AiKey custom routing](assets/aikey-custom-routing-minimal.png)
 
-**配图建议：** 使用路由编排图：上层是任务类型，例如 coding、review、batch、fallback；中层是自定义策略；下层连接 Claude / Kimi / Codex 多账号池。
+把多个 AI 账号，编排成一套可控路由。
 
 
 
