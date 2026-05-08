@@ -14,40 +14,7 @@ curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-i
 
 安装到 `~/.aikey/bin`。
 
-### Windows（PowerShell 原生，**无需** WSL）
-(Windows 兼容尚在优化中,敬请期待)
 
-> Stage 4 windows-compat。最低支持：Windows 10 1809+ / Windows 11 /
-> Windows Server 2019+。在 PowerShell 7+（推荐）或 Windows PowerShell 5.1
-> 下均可。
-
-```powershell
-# 下载 installer 包（包含 entrypoint + lib/*.ps1），解压、运行
-iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/aikey-installer-windows_1.0.0-rc.1.zip" -OutFile "$env:TEMP\aikey-inst.zip"
-Expand-Archive -Path "$env:TEMP\aikey-inst.zip" -DestinationPath "$env:TEMP\aikey-inst" -Force
-& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.1
-```
-
-> 为什么是"下 zip + 解压 + 运行"三步而不是一行 `iwr | iex`：`.ps1`
-> 入口脚本会从 `$PSScriptRoot/lib` 加载 `health/service/backup.ps1`，
-> 这些 lib 必须在运行时落在 entrypoint 旁边的磁盘上；zip 保留了
-> 这个相对结构。功能上等价于 macOS / Linux 的 `curl ... | sh`。
-
-安装到 `%LOCALAPPDATA%\Aikey\bin` 并自动追加到当前用户 `PATH`。安装器
-把 install dir 的 NTFS ACL 收紧到 owner-only —— 加密 vault 永远不会被
-同台机器的其他用户读到。
-
-如需 PowerShell hook 自动激活（运行 `aikey use foo` 后，新开 PowerShell
-会自动带上对应 env vars），安装后执行：
-
-```powershell
-aikey hook install
-```
-
-这会向 `$PROFILE.CurrentUserAllHosts` 追加一个标记块（执行前会问你确认；
-传 `-Yes` 自动同意）。
-
----
 
 ## 使用个人 API Key
 
@@ -203,6 +170,42 @@ aikey key sync          # Key 状态不对时强制同步
 ```
 
 ### Windows 专属
+
+#### Windows上安装（PowerShell 原生，**无需** WSL）
+(Windows 兼容尚在优化中,敬请期待)
+
+> Stage 4 windows-compat。最低支持：Windows 10 1809+ / Windows 11 /
+> Windows Server 2019+。在 PowerShell 7+（推荐）或 Windows PowerShell 5.1
+> 下均可。
+
+```powershell
+# 下载 installer 包（包含 entrypoint + lib/*.ps1），解压、运行
+iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/aikey-installer-windows_1.0.0-rc.1.zip" -OutFile "$env:TEMP\aikey-inst.zip"
+Expand-Archive -Path "$env:TEMP\aikey-inst.zip" -DestinationPath "$env:TEMP\aikey-inst" -Force
+& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.1
+```
+
+> 为什么是"下 zip + 解压 + 运行"三步而不是一行 `iwr | iex`：`.ps1`
+> 入口脚本会从 `$PSScriptRoot/lib` 加载 `health/service/backup.ps1`，
+> 这些 lib 必须在运行时落在 entrypoint 旁边的磁盘上；zip 保留了
+> 这个相对结构。功能上等价于 macOS / Linux 的 `curl ... | sh`。
+
+安装到 `%LOCALAPPDATA%\Aikey\bin` 并自动追加到当前用户 `PATH`。安装器
+把 install dir 的 NTFS ACL 收紧到 owner-only —— 加密 vault 永远不会被
+同台机器的其他用户读到。
+
+如需 PowerShell hook 自动激活（运行 `aikey use foo` 后，新开 PowerShell
+会自动带上对应 env vars），安装后执行：
+
+```powershell
+aikey hook install
+```
+
+这会向 `$PROFILE.CurrentUserAllHosts` 追加一个标记块（执行前会问你确认；
+传 `-Yes` 自动同意）。
+
+---
+
 
 | 现象 | 可能原因 + 修复 |
 |---|---|
