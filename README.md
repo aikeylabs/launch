@@ -206,7 +206,20 @@ aikey list              # View all keys
 aikey use               # Switch the active key
 aikey whoami            # Current identity + active key
 aikey doctor            # One-click health check
+aikey test --all        # Probe every credential in the vault (see below)
 ```
+
+---
+
+## Connectivity Test
+
+```bash
+aikey test                # Probe each active Primary binding
+aikey test my-key         # One row per protocol the named key supports
+aikey test --all          # Every credential in the vault (personal / team / OAuth)
+```
+
+Each row runs **Ping(D) → Ping(proxy) → API → Chat** in sequence. Multi-protocol personal keys (e.g. an aggregator key declaring `anthropic + openai + kimi`) expand to one row per protocol — same Key column, different Protocol column; team keys and OAuth accounts each produce one row because their provider is fixed by the credential itself. `--all` is the right call after bulk-importing keys or when triaging "this one key suddenly stopped working" — the Key column surfaces friendly aliases (`key-335923591-0011-1` / email), not internal vk_id / account_id tails.
 
 ---
 

@@ -194,7 +194,20 @@ aikey list              # 查看所有 Key
 aikey use               # 切换当前 Key
 aikey whoami            # 查看当前身份和当前 Key
 aikey doctor            # 一键自检
+aikey test --all        # vault 里所有 Key 全量体检（见下）
 ```
+
+---
+
+## 测试 Key 连通性
+
+```bash
+aikey test                # 当前已激活的 Primary 绑定逐个体检
+aikey test my-key         # 指定 Key,跨该 Key 支持的所有协议各跑一行
+aikey test --all          # vault 里所有 Key (personal / team / OAuth) 全量体检
+```
+
+每行依次跑 **Ping(D) → Ping(代理) → API → Chat** 四阶探测。多协议 Personal Key 会按 `supported_providers` 展开成多行(比如 0011 聚合网关同时支持 `anthropic + openai + kimi` 时显示 3 行,Key 列同名,Protocol 列分别);团队 Key 和 OAuth 协议固定,各一行。`--all` 适合批量导入新 Key 后或排查"某个 Key 突然不通"时做全量自检,Key 列显示友好别名(`key-335923591-0011-1` / 邮箱),不是 vk_id 尾巴。
 
 ---
 
