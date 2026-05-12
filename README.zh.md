@@ -32,6 +32,8 @@ aikey use                       # 选择当前使用的 KEY / 账号
 
 **敏感凭证集中保管，工作入口自由分发。**
 
+> ✨ 操作走查 → [个人版完整流程 · 步骤 3：Vault 添加 KEY](#3-vault-页面添加-key同意顶部-install-hook)
+
 ### 2. 用量趋势与 token 成本洞察
 
 AI 成本最容易在日常协作里变成一笔糊涂账：谁在高频调用、哪个账号突然变贵、发布前后 token 是否异常增长，往往要到账单出来后才发现。没有趋势和结构，就很难把优化变成日常动作。
@@ -45,6 +47,8 @@ aikey web                       # 打开控制台查看 Vault、用量和 token 
 ![AiKey usage dashboard](assets/aikey-usage-dashboard-minimal.png)
 
 **不只会用 KEY，还能看懂 KEY 怎么被用。**
+
+> ✨ 操作走查 → [个人版完整流程 · 步骤 4：聊天后查看费用小票](#4-运行-claude聊天后查看费用小票) · [步骤 6：查看用量统计](#6-查看用量统计)
 
 ### 3. 多窗口、多应用、多账号同时工作
 
@@ -65,6 +69,8 @@ claude
 
 **一个工作站，同时跑多个 AI 工作流。**
 
+> ✨ 操作走查 → [个人版完整流程 · 步骤 4：运行 claude / kimi / codex](#4-运行-claude聊天后查看费用小票) · [步骤 5：切换 Key](#5-切换-keyweb-端--cli-双入口)
+
 ### 4. 额度不足时无缝切换账号
 
 最影响心流的不是额度不足本身，而是额度在长对话、代码审查或排障中途突然耗尽。重新登录、重启 CLI、复制上下文都会打断思路，也可能让还没完成的任务丢掉节奏。
@@ -78,6 +84,8 @@ aikey use backup-account        # 不退出当前 claude，会话继续使用新
 ![AiKey quota switch](assets/aikey-quota-switch-minimal.png)
 
 **额度用完，不打断思路。**
+
+> ✨ 操作走查 → [个人版完整流程 · 步骤 5：切换 Key（Web 端 / CLI 双入口）](#5-切换-keyweb-端--cli-双入口)
 
 ### 5. 自定义路由与多模型编排
 
@@ -93,6 +101,8 @@ aikey route work                # 复制指定 KEY 的 base_url + api_key
 ![AiKey custom routing](assets/aikey-custom-routing-minimal.png)
 
 **把多个 AI 账号，编排成一套可控路由。**
+
+> ✨ 操作走查 → [详细命令参考 · 在第三方 AI 客户端中使用 Key](#高级用法在第三方-ai-客户端中使用-key)
 
 
 
@@ -114,7 +124,123 @@ curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-i
 
 安装到 `~/.aikey/bin`。
 
+---
 
+## 个人版完整流程
+
+> 端到端日常使用流程：**装好 → 加 Key → 聊天 → 看小票 → 切换 → 看统计**。每一步附截图占位，并标注它兑现了哪一条产品亮点。每一步的命令细节和高级用法见下方 [详细命令参考](#使用个人-api-key)。
+
+### 1. 安装 CLI + source
+
+按上面的 [`## 安装`](#安装) 完成安装后，让 PATH 立即生效：
+
+```bash
+source ~/.zshrc    # 或 source ~/.bashrc，按你的 shell
+```
+
+Windows PowerShell 见下方 [Windows 专属](#windows-专属) 一节，原生 PowerShell 安装，**无需** WSL。
+
+> 终端 `local-install.sh` 完成后的输出（应能看到 `aikey` 已安装到 `~/.aikey/bin`）
+![alt text](assets/personal-step1-install-output.png)
+
+### 2. 打开 aikey web
+
+```bash
+aikey web
+```
+
+会自动在浏览器打开本地 vault 控制台。
+
+> `aikey web` 首次打开的页面（Vault 列表为空 / 未添加任何 Key）
+![alt text](assets/personal-step2-aikey-web-empty.png)
+
+### 3. Vault 页面添加 KEY，同意顶部 install hook
+
+✨ **对应亮点 1：一键导入 KEY 与账号** —— 真实凭证只进入本地 Vault；日常分发的是可撤销的路由 token。
+
+在 **Vault** 页面（侧边栏 My Vault，或 `aikey web --vault`）添加 Key。三种方式：
+
+
+- **A) API Key**：点击「Add Key」，填 alias + provider + 真实 key → 保存。
+> Vault 页面 + 顶部 Install hook 横幅 + 「Add Key」表单
+![alt text](assets/personal-step3-add-key-form.png)
+
+
+- **B) API Key(从 CLI 添加 )**：
+> 按照 CLI 指引完成添加。
+![alt text](assets/personal-step3-cli-add-key.png)
+- **C) OAuth 账号**（Pro / Max / Plus 订阅）：点击 OAuth 登录，浏览器完成授权后自动回写。也可走 CLI：
+
+  ```bash
+  aikey auth login claude        # Claude (Anthropic)
+  aikey auth login codex         # Codex / ChatGPT (OpenAI)
+  aikey auth login kimi_code     # Kimi Code (api.kimi.com); 'kimi' alias 仍可用
+  ```
+
+> 添加后页面顶部会出现 **「Install hook」横幅**，点击安装 —— shell hook 写到本地 rc 文件，让 `claude` / `codex` / `kimi` 等 CLI 在新开 Terminal 中自动识别 active key。
+![alt text](assets/personal-step3-install-hook-banner.png)
+
+
+> 添加完成后的 Vault Key 列表（API Key + OAuth 账号并存）
+![alt text](assets/personal-step3-vault-key-list.png)
+
+### 4. 运行 claude，聊天后查看费用小票
+
+✨ **对应亮点 2 + 3：多窗口多账号同时工作 + 用量趋势与 token 成本洞察**
+
+打开**新的** Terminal（让 hook 生效），运行：
+
+```bash
+claude        # 或 kimi、codex —— 视 Vault 中已添加的 Key/账号而定
+```
+
+聊天结束、退出会话后，AiKey 会在终端打印一份**费用小票**（cost receipt），列出本次会话的 token 用量与估算费用 —— 不必等到月底账单，实时把控成本。
+
+> 新开 Terminal 运行 `claude` 后的交互界面
+![alt text](assets/personal-step4-claude-interactive.png)
+
+> claude 退出后终端打印的费用小票（token 用量 + 估算费用）
+![alt text](assets/personal-step4-cost-receipt.png)
+
+### 5. 切换 Key（Web 端 / CLI 双入口）
+
+✨ **对应亮点 4：额度不足时无缝切换账号** —— 不用退出正在运行的 `claude` 会话，下一次请求就生效。
+
+> **Web 端**：在 Vault 页面点击某个 Key，将其设为当前 active —— 影响所有新开 CLI 窗口。
+![alt text](assets/personal-step5-web-switch-active.png)
+
+**CLI 全局切换**（持久，写入 `active.env`）：
+
+```bash
+aikey use my-key                  # 切换全局 active key
+```
+
+**CLI 临时切换**（仅当前终端）：
+
+```bash
+aikey activate my-key             # 仅当前终端 env，关掉终端即恢复
+(my-key) ~/Projects %             # 提示符显示当前激活的 Key
+
+aikey deactivate                  # 立刻恢复全局设置
+```
+
+> 终端执行 `aikey use my-key` 的输出（或 Web 端 Vault 切换 active key 的画面）
+![alt text](assets/personal-step5-cli-aikey-use.png)
+
+### 6. 查看用量统计
+
+✨ **对应亮点 2：用量趋势与 token 成本洞察**
+
+```bash
+aikey web                # 浏览器打开控制台 → Usage / Dashboard
+```
+
+控制台展示每个 Key、账号、provider 的用量趋势 + token 结构（cache token 占比、请求量、provider 分布），帮助发布前后做费用复盘与成本优化。
+
+> aikey web 用量 / Usage Dashboard 主视图（token 趋势 + provider 分布）
+![alt text](assets/personal-step6-usage-dashboard.png)
+
+---
 
 ## 使用个人 API Key
 
@@ -293,9 +419,9 @@ aikey key sync          # Key 状态不对时强制同步
 
 ```powershell
 # 下载 installer 包（包含 entrypoint + lib/*.ps1），解压、运行
-iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/aikey-installer-windows_1.0.0-rc.1.zip" -OutFile "$env:TEMP\aikey-inst.zip"
+iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/aikey-installer-windows_1.0.0-rc.3.zip" -OutFile "$env:TEMP\aikey-inst.zip"
 Expand-Archive -Path "$env:TEMP\aikey-inst.zip" -DestinationPath "$env:TEMP\aikey-inst" -Force
-& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.1
+& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.3
 ```
 
 > 为什么是"下 zip + 解压 + 运行"三步而不是一行 `iwr | iex`：`.ps1`
@@ -331,7 +457,7 @@ aikey hook install
 重新安装 = 升级，直接运行:
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/local-install.sh | sh -s -- --version v1.0.0-rc.1
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3
 
 ```
 
@@ -348,12 +474,12 @@ aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http
 curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh -s -- --clear
 
 # 删除数据并安装指定版本
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/local-install.sh | sh -s -- --version v1.0.0-rc.1 --clear
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3 --clear
 ```
 
 
 **仅卸载（不重装）:**
 ```bash
 # 危险：清掉 ~/.aikey、第三方 CLI 注入、shell hook、OS keychain，但不重装
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/uninstall.sh | sh -s -- --yes
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/uninstall.sh | sh -s -- --yes
 ```

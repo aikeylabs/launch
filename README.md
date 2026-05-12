@@ -32,6 +32,8 @@ aikey use                       # Pick the active key / account
 
 **Centralize sensitive credentials, distribute work entrypoints freely.**
 
+> ✨ Walkthrough → [Personal edition complete flow · Step 3: Add a key in the Vault](#3-add-a-key-in-the-vault-and-accept-the-install-hook-banner)
+
 ### 2. Usage trends and token cost insights
 
 AI cost easily becomes a black box: who's calling at high frequency, which account suddenly got expensive, whether tokens spiked around a release — most teams only find out when the invoice arrives. Without trend and structure, optimization never makes it into the daily routine.
@@ -45,6 +47,8 @@ aikey web                       # Open the console for vault, usage, and token s
 ![AiKey usage dashboard](assets/aikey-usage-dashboard-minimal.png)
 
 **Don't just use the key — understand how the key is being used.**
+
+> ✨ Walkthrough → [Personal flow · Step 4: Cost receipt after a chat](#4-run-claude-and-read-the-cost-receipt-after-the-chat) · [Step 6: Usage dashboard](#6-view-usage-statistics)
 
 ### 3. Multiple windows, multiple apps, multiple accounts in parallel
 
@@ -65,6 +69,8 @@ claude
 
 **One workstation, many AI workflows running side by side.**
 
+> ✨ Walkthrough → [Personal flow · Step 4: Run claude / kimi / codex](#4-run-claude-and-read-the-cost-receipt-after-the-chat) · [Step 5: Switch keys](#5-switch-keys-web-or-cli)
+
 ### 4. Seamless account switching when quota runs out
 
 The thing that breaks flow isn't the quota itself — it's the quota running out mid-conversation, mid-review, or mid-debug. Re-login, restart the CLI, copy context: each step pulls you out of the problem and risks losing momentum on unfinished work.
@@ -78,6 +84,8 @@ aikey use backup-account        # Don't exit claude; the session continues on th
 ![AiKey quota switch](assets/aikey-quota-switch-minimal.png)
 
 **Quota gone, train of thought intact.**
+
+> ✨ Walkthrough → [Personal flow · Step 5: Switch keys (Web or CLI)](#5-switch-keys-web-or-cli)
 
 ### 5. Custom routing and multi-model orchestration
 
@@ -93,6 +101,8 @@ aikey route work                # Copy the base_url + api_key for a specific key
 ![AiKey custom routing](assets/aikey-custom-routing-minimal.png)
 
 **Compose multiple AI accounts into one controllable routing fabric.**
+
+> ✨ Walkthrough → [Reference · Use keys in third-party AI clients](#advanced-use-keys-in-third-party-ai-clients)
 
 
 
@@ -120,12 +130,128 @@ curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-i
 **Pinned version** (e.g. for a specific RC or alpha):
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/local-install.sh | sh -s -- --version v1.0.0-rc.1
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3
 ```
 
 Installs to `~/.aikey/bin`.
 
+---
 
+## Personal edition complete flow
+
+> End-to-end daily flow: **install → add a key → chat → read the cost receipt → switch → check usage**. Each step has a screenshot placeholder and points back to the product highlight it delivers. For command details and advanced options, see the [Reference](#use-your-own-api-key) below.
+
+### 1. Install the CLI + source
+
+After completing [`## Install`](#install) above, apply PATH changes immediately:
+
+```bash
+source ~/.zshrc    # or source ~/.bashrc, depending on your shell
+```
+
+For Windows PowerShell, see the [Windows-specific](#windows-specific) section below — native PowerShell install, **no** WSL required.
+
+> Terminal output after `local-install.sh` completes (`aikey` installed to `~/.aikey/bin`)
+![alt text](assets/personal-step1-install-output.png)
+
+### 2. Open aikey web
+
+```bash
+aikey web
+```
+
+Opens the local vault console in the default browser.
+
+> `aikey web` on first open (empty Vault list, no keys added yet)
+![alt text](assets/personal-step2-aikey-web-empty.png)
+
+### 3. Add a key in the Vault and accept the install-hook banner
+
+✨ **Delivers Highlight 1: one-click import for keys and accounts** — real credentials only enter the local Vault; what's distributed daily is a revocable route token.
+
+In the **Vault** page (sidebar **My Vault**, or `aikey web --vault`) add a key. Three paths:
+
+
+- **A) API Key (Web)**: click "Add Key", fill alias + provider + the real key → save.
+> Vault page + top Install-hook banner + the "Add Key" form
+![alt text](assets/personal-step3-add-key-form.png)
+
+
+- **B) API Key (CLI)**:
+> Follow the CLI prompts to complete the add flow.
+![alt text](assets/personal-step3-cli-add-key.png)
+- **C) OAuth account** (Pro / Max / Plus subscriptions): click OAuth login, the browser handles authorization and writes back. CLI equivalent:
+
+  ```bash
+  aikey auth login claude        # Claude (Anthropic)
+  aikey auth login codex         # Codex / ChatGPT (OpenAI)
+  aikey auth login kimi_code     # Kimi Code (api.kimi.com); 'kimi' alias still works
+  ```
+
+> After adding, the top of the page shows an **"Install hook" banner** — click it to install. The shell hook is written to your local rc file so that `claude` / `codex` / `kimi` and other CLIs auto-pick up the active key in new terminals.
+![alt text](assets/personal-step3-install-hook-banner.png)
+
+
+> Vault key list after adding (API Keys + OAuth accounts side by side)
+![alt text](assets/personal-step3-vault-key-list.png)
+
+### 4. Run claude and read the cost receipt after the chat
+
+✨ **Delivers Highlights 2 + 3: multi-window multi-account work + usage trends and token cost insight**
+
+Open a **new** terminal (so the hook is loaded), then:
+
+```bash
+claude        # or kimi / codex — depending on what you added to the Vault
+```
+
+When the session ends, AiKey prints a **cost receipt** in the terminal — the session's token usage and estimated cost. No need to wait for the monthly invoice; cost stays in real-time view.
+
+> Claude CLI interactive session in a fresh terminal
+![alt text](assets/personal-step4-claude-interactive.png)
+
+> Cost receipt printed in the terminal after claude exits (tokens used + estimated cost)
+![alt text](assets/personal-step4-cost-receipt.png)
+
+### 5. Switch keys (Web or CLI)
+
+✨ **Delivers Highlight 4: seamless account switching when quota runs out** — no need to exit the running `claude` session; the next request picks up the new binding.
+
+> **Web side**: click any key in the Vault page to set it active — affects every new CLI window.
+![alt text](assets/personal-step5-web-switch-active.png)
+
+**CLI global switch** (persistent, writes to `active.env`):
+
+```bash
+aikey use my-key                  # global active key switch
+```
+
+**CLI temporary switch** (current terminal only):
+
+```bash
+aikey activate my-key             # current-terminal env only; close terminal to revert
+(my-key) ~/Projects %             # the prompt shows the active key
+
+aikey deactivate                  # restore global settings immediately
+```
+
+> Terminal output of `aikey use my-key`
+![alt text](assets/personal-step5-cli-aikey-use.png)
+
+### 6. View usage statistics
+
+✨ **Delivers Highlight 2: usage trends and token cost insight**
+
+```bash
+aikey web                # opens the console → Usage / Dashboard
+```
+
+The console surfaces per-key, per-account, per-protocol usage trends plus token structure (cache token share, request volume, provider distribution) — useful for pre/post-release cost review and optimization.
+
+> aikey web Usage / Dashboard main view (token trend + provider distribution)
+![alt text](assets/personal-step6-usage-dashboard.png)
+
+---
 
 ## Use Your Own API Key
 
@@ -305,9 +431,9 @@ aikey key sync          # Force-sync key status
 
 ```powershell
 # Download the installer bundle (entrypoint + lib/*.ps1), extract, run
-iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/aikey-installer-windows_1.0.0-rc.1.zip" -OutFile "$env:TEMP\aikey-inst.zip"
+iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/aikey-installer-windows_1.0.0-rc.3.zip" -OutFile "$env:TEMP\aikey-inst.zip"
 Expand-Archive -Path "$env:TEMP\aikey-inst.zip" -DestinationPath "$env:TEMP\aikey-inst" -Force
-& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.1
+& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.3
 ```
 
 > Why "download zip + extract + run" instead of a single `iwr | iex` line:
@@ -345,7 +471,7 @@ This appends a single marker block to `$PROFILE.CurrentUserAllHosts`
 Reinstall = upgrade. Just run:
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/local-install.sh | sh -s -- --version v1.0.0-rc.1
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3
 ```
 
 **Behind a proxy:**
@@ -363,7 +489,7 @@ aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http
 curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh -s -- --clear
 
 # Wipe data and install a pinned version
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/local-install.sh | sh -s -- --version v1.0.0-rc.1 --clear
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3 --clear
 ```
 
 
@@ -372,5 +498,5 @@ curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/loc
 ```bash
 # Danger: removes ~/.aikey, third-party CLI injections, shell hooks,
 # and OS keychain entries — but does not reinstall.
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.1/uninstall.sh | sh -s -- --yes
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/uninstall.sh | sh -s -- --yes
 ```
