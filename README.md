@@ -127,10 +127,10 @@ Add `-s -- --yes` to skip prompts (e.g. CI / automated scripts):
 curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh -s -- --yes
 ```
 
-**Pinned version** (e.g. for a specific RC or alpha):
+**Pinned version** — replace `<TAG>` below with a specific release (e.g. `v1.0.0-rc.3`):
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/<TAG>/local-install.sh | sh -s -- --version <TAG>
 ```
 
 Installs to `~/.aikey/bin`.
@@ -169,7 +169,7 @@ Opens the local vault console in the default browser.
 
 ✨ **Delivers Highlight 1: one-click import for keys and accounts** — real credentials only enter the local Vault; what's distributed daily is a revocable route token.
 
-In the **Vault** page (sidebar **My Vault**, or `aikey web --vault`) add a key. Three paths:
+In the **Vault** page (sidebar **My Vault**, or `aikey web --vault`) add a key. Four paths:
 
 
 - **A) API Key (Web)**: click "Add Key", fill alias + provider + the real key → save.
@@ -180,7 +180,12 @@ In the **Vault** page (sidebar **My Vault**, or `aikey web --vault`) add a key. 
 - **B) API Key (CLI)**:
 > Follow the CLI prompts to complete the add flow.
 ![alt text](assets/personal-step3-cli-add-key.png)
-- **C) OAuth account** (Pro / Max / Plus subscriptions): click OAuth login, the browser handles authorization and writes back. CLI equivalent:
+
+- **C) Batch import**:
+> Sidebar **Import**, or run `aikey web --import` to open the bulk-import page.
+![alt text](assets/personal-step3-batch-import.png)
+
+- **D) OAuth account** (Pro / Max / Plus subscriptions): click OAuth login, the browser handles authorization and writes back. CLI equivalent:
 
   ```bash
   aikey auth login claude        # Claude (Anthropic)
@@ -255,6 +260,10 @@ The console surfaces per-key, per-account, per-protocol usage trends plus token 
 
 ## Use Your Own API Key
 
+> ⚠️ **`aikey login` and `aikey auth login` are two different commands — don't confuse them:**
+> - `aikey login` (alias of `aikey account login`) — **log in to the AiKey control service** (team edition: connect the CLI to a server). Not needed on the personal edition.
+> - `aikey auth login <claude/codex/kimi>` — **add a provider OAuth account to your local vault** (Claude Pro/Max, ChatGPT Plus, Kimi Code subscriptions — no API key required).
+
 Add your API key to the local encrypted vault:
 
 ```bash
@@ -277,17 +286,19 @@ kimi                # Kimi CLI (works for both kimi(kimi-code) and kimi(moonshot
 
 Keys are routed through the local proxy. Real credentials are never exposed.
 
-### Use OAuth Accounts
+### Sign in to a provider via OAuth (no API key needed)
 
-If you have a Claude Pro/Max, ChatGPT Plus, or similar subscription, log in directly via OAuth — no API key needed:
+If you have a Claude Pro/Max, ChatGPT Plus, or Kimi subscription, run `aikey auth login <provider>` to **add the provider's OAuth account into your local vault** — no API key required:
 
 ```bash
-aikey auth login claude       # Claude (Anthropic)
-aikey auth login codex        # Codex / ChatGPT (OpenAI)
+aikey auth login claude       # Claude (Anthropic) — Pro / Max subscription
+aikey auth login codex        # Codex / ChatGPT (OpenAI) — Plus / Pro subscription
 aikey auth login kimi_code    # Kimi Code (api.kimi.com); the 'kimi' alias still works
 ```
 
-OAuth accounts and API keys are managed together via `aikey use`.
+> `auth login` here **adds a provider credential to the local vault** — it is NOT the same as the team edition's `aikey login` (which connects the CLI to the AiKey control service).
+
+Provider OAuth accounts and API keys are both switched via `aikey use`.
 
 List every key you've added:
 
@@ -311,7 +322,7 @@ The sidebar's **My Vault** page (or `aikey web --vault`) lists every Personal
 API Key and OAuth account you have locally. You can rename, one-shot reveal
 (client-side 60-second auto-mask), delete, or add keys through the same
 unlock session as the Import page. OAuth session tokens are **never** revealed
-in the browser — to add an OAuth account, run `aikey account login <provider>`.
+in the browser — to add an OAuth account, run `aikey auth login <provider>`.
 
 ---
 
@@ -331,9 +342,13 @@ aikey run -- python eval.py
 aikey list              # View all keys
 aikey use               # Switch the active key
 aikey whoami            # Current identity + active key
+aikey env               # View active.env (shell-facing) and proxy.env (aikey-proxy process)
+aikey env set KEY=VAL   # Merge-write proxy.env (e.g. https_proxy / http_proxy)
 aikey doctor            # One-click health check
 aikey test --all        # Probe every credential in the vault (see below)
 ```
+
+> Tip: the installer also creates an `ak` symlink to `aikey`. Every command works under the short alias (e.g. `ak env`, `ak use`, `ak doctor`).
 
 ---
 
@@ -404,7 +419,7 @@ Create or edit `~/.config/opencode/opencode.jsonc`:
       }
     }
   },
-  "model": "anthropic/claude-opus-4-6"
+  "model": "anthropic/claude-opus-4-7"
 }
 ```
 
@@ -431,9 +446,12 @@ aikey key sync          # Force-sync key status
 
 ```powershell
 # Download the installer bundle (entrypoint + lib/*.ps1), extract, run
-iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/aikey-installer-windows_1.0.0-rc.3.zip" -OutFile "$env:TEMP\aikey-inst.zip"
+# Auto-resolves the latest tag via GitHub API — no hardcoded version
+$Tag  = (Invoke-RestMethod "https://api.github.com/repos/aikeylabs/launch/releases/latest").tag_name
+$Bare = $Tag.TrimStart('v')
+iwr "https://github.com/aikeylabs/launch/releases/download/$Tag/aikey-installer-windows_${Bare}.zip" -OutFile "$env:TEMP\aikey-inst.zip"
 Expand-Archive -Path "$env:TEMP\aikey-inst.zip" -DestinationPath "$env:TEMP\aikey-inst" -Force
-& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.3
+& "$env:TEMP\aikey-inst\local-install.ps1"     # without -Version, installer auto-resolves the latest tag
 ```
 
 > Why "download zip + extract + run" instead of a single `iwr | iex` line:
@@ -471,14 +489,28 @@ This appends a single marker block to `$PROFILE.CurrentUserAllHosts`
 Reinstall = upgrade. Just run:
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3
+curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/local-install.sh | sh
 ```
 
-**Behind a proxy:**
+**Environment management (`aikey env` / `ak env`):**
+
+AiKey keeps two env files:
+
+- `~/.aikey/active.env` — **shell-facing** derived env (the hook injects the active key / endpoint into `claude` / `codex` / `kimi`; written by `aikey use`, don't edit by hand).
+- `~/.aikey/proxy.env` — **aikey-proxy process** env (outbound HTTP proxy, custom endpoint overrides; user-managed).
+
+```bash
+aikey env                  # Show both env files (sensitive values masked; proxy.env shows entry count + config hash)
+```
+
+**Behind an outbound proxy (e.g. github / providers unreachable without VPN):**
 
 ```bash
 aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http://127.0.0.1:7890;export all_proxy=socks5://127.0.0.1:7890
+aikey proxy restart        # Required after editing proxy.env
 ```
+
+> `aikey env set` only writes `proxy.env` — it **does not** touch `active.env`. It merges into the existing file instead of replacing it, and accepts `KEY=VAL` pairs (multiple, optional `export` prefix, semicolon-separated). If the existing `proxy.env` is unparseable it stops and asks you to fix it first.
 
 
 **Wipe data and reinstall:**
@@ -488,8 +520,8 @@ aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http
 # (in pipe mode the prompt reads y/N from /dev/tty; pass --yes to skip)
 curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh -s -- --clear
 
-# Wipe data and install a pinned version
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3 --clear
+# Wipe data and install a pinned version (replace <TAG> with the version to pin, e.g. v1.0.0-rc.3)
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/<TAG>/local-install.sh | sh -s -- --version <TAG> --clear
 ```
 
 
@@ -498,5 +530,5 @@ curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/loc
 ```bash
 # Danger: removes ~/.aikey, third-party CLI injections, shell hooks,
 # and OS keychain entries — but does not reinstall.
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/uninstall.sh | sh -s -- --yes
+curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/uninstall.sh | sh -s -- --yes
 ```

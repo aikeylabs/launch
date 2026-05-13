@@ -169,7 +169,12 @@ aikey web
 - **B) API Key(从 CLI 添加 )**：
 > 按照 CLI 指引完成添加。
 ![alt text](assets/personal-step3-cli-add-key.png)
-- **C) OAuth 账号**（Pro / Max / Plus 订阅）：点击 OAuth 登录，浏览器完成授权后自动回写。也可走 CLI：
+
+- **C) 批量导入**：
+> 侧边栏 Import，或 `aikey web --import` 打开批量导入页面
+![alt text](assets/personal-step3-batch-import.png)
+
+- **D) OAuth 账号**（Pro / Max / Plus 订阅）：点击 OAuth 登录，浏览器完成授权后自动回写。也可走 CLI：
 
   ```bash
   aikey auth login claude        # Claude (Anthropic)
@@ -244,6 +249,10 @@ aikey web                # 浏览器打开控制台 → Usage / Dashboard
 
 ## 使用个人 API Key
 
+> ⚠️ **`aikey login` 和 `aikey auth login` 是两件事，不要混用：**
+> - `aikey login`（即 `aikey account login`）—— **登录 AiKey 控制服务**（团队版连接到 server，建立 CLI 与控制面的会话）；个人版用不到。
+> - `aikey auth login <claude/codex/kimi>` —— **添加 Provider OAuth 账号到本地 vault**（Claude Pro/Max、ChatGPT Plus、Kimi Code 等订阅，无需 API Key）。
+
 将你的 API Key 添加到本地加密 vault：
 
 ```bash
@@ -266,17 +275,19 @@ kimi                # Kimi CLI（kimi(kimi-code) 与 kimi(moonshot) 通用）
 
 Key 通过本地代理路由，不会暴露真实凭证。
 
-### 使用 OAuth 账号
+### 用 Provider OAuth 账号登录（无需 API Key）
 
-如果你有 Claude Pro/Max、ChatGPT Plus 等订阅，可以直接用 OAuth 登录，无需 API Key：
+如果你有 Claude Pro/Max、ChatGPT Plus、Kimi 订阅等账号，可以用 `aikey auth login <provider>` 把 Provider 的 OAuth 账号加进本地 vault，**不需要 API Key**：
 
 ```bash
-aikey auth login claude       # Claude (Anthropic)
-aikey auth login codex        # Codex / ChatGPT (OpenAI)
+aikey auth login claude       # Claude (Anthropic) — Pro / Max 订阅
+aikey auth login codex        # Codex / ChatGPT (OpenAI) — Plus / Pro 订阅
 aikey auth login kimi_code    # Kimi Code (api.kimi.com); 'kimi' alias 仍可用
 ```
 
-OAuth 账号和 API Key 统一通过 `aikey use` 切换。
+> 这里的 `auth login` 是**给本地 vault 添加 Provider 凭证**，跟团队版的 `aikey login`（连接 AiKey 控制服务）不是同一件事。
+
+Provider OAuth 账号和 API Key 都通过 `aikey use` 切换 active。
 
 查看已添加的所有 Key：
 
@@ -299,7 +310,7 @@ aikey web
 侧边栏 **My Vault**（或 `aikey web --vault`）展示本机 vault 里的所有 Personal
 API Key 和 OAuth 账号，支持改别名、一次性 reveal（前端 60 秒自动重新遮罩）、
 删除、新增。unlock 会话与 Import 页面共享。OAuth session token **永不**在
-浏览器展示；新增 OAuth 账号请走 `aikey account login <provider>`。
+浏览器展示；新增 OAuth 账号请走 `aikey auth login <provider>`。
 
 ---
 
@@ -319,9 +330,13 @@ aikey run -- python eval.py
 aikey list              # 查看所有 Key
 aikey use               # 切换当前 Key
 aikey whoami            # 查看当前身份和当前 Key
+aikey env               # 查看 active.env (shell 注入) 和 proxy.env (proxy 进程)
+aikey env set KEY=VAL   # 合并写入 proxy.env，常用于配 https_proxy / http_proxy
 aikey doctor            # 一键自检
 aikey test --all        # vault 里所有 Key 全量体检（见下）
 ```
+
+> 提示：安装器会同时把 `aikey` 软链一份成 `ak`，所有命令都可以用短别名调用（如 `ak env`、`ak use`、`ak doctor`）。
 
 ---
 
@@ -392,7 +407,7 @@ aikey route my-key              # 查看指定 key 的可粘贴配置
       }
     }
   },
-  "model": "anthropic/claude-opus-4-6"
+  "model": "anthropic/claude-opus-4-7"
 }
 ```
 
@@ -419,9 +434,12 @@ aikey key sync          # Key 状态不对时强制同步
 
 ```powershell
 # 下载 installer 包（包含 entrypoint + lib/*.ps1），解压、运行
-iwr "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/aikey-installer-windows_1.0.0-rc.3.zip" -OutFile "$env:TEMP\aikey-inst.zip"
+# 通过 GitHub API 自动解析 latest tag —— 无需硬编码版本号
+$Tag  = (Invoke-RestMethod "https://api.github.com/repos/aikeylabs/launch/releases/latest").tag_name
+$Bare = $Tag.TrimStart('v')
+iwr "https://github.com/aikeylabs/launch/releases/download/$Tag/aikey-installer-windows_${Bare}.zip" -OutFile "$env:TEMP\aikey-inst.zip"
 Expand-Archive -Path "$env:TEMP\aikey-inst.zip" -DestinationPath "$env:TEMP\aikey-inst" -Force
-& "$env:TEMP\aikey-inst\local-install.ps1" -Version v1.0.0-rc.3
+& "$env:TEMP\aikey-inst\local-install.ps1"     # 不带 -Version 则 installer 自解析 latest
 ```
 
 > 为什么是"下 zip + 解压 + 运行"三步而不是一行 `iwr | iex`：`.ps1`
@@ -457,14 +475,29 @@ aikey hook install
 重新安装 = 升级，直接运行:
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3
+curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/local-install.sh | sh
 
 ```
 
-**能不能使用代理:**
+**环境变量管理（`aikey env` / `ak env`）:**
+
+AiKey 维护两份 env：
+
+- `~/.aikey/active.env` —— **shell 侧**衍生环境（hook 注入 `claude` / `codex` / `kimi` 用的 KEY / endpoint，由 `aikey use` 自动写入，不要手改）。
+- `~/.aikey/proxy.env` —— **proxy 进程**专属环境（出网代理、自定义 endpoint 覆盖等，由用户管控）。
+
+```bash
+aikey env                  # 查看两份 env（敏感值自动遮罩；proxy.env 显示条目数+配置哈希）
+```
+
+**配出网代理（access github / provider 需要走梯子的场景）:**
+
 ```bash
 aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http://127.0.0.1:7890;export all_proxy=socks5://127.0.0.1:7890
+aikey proxy restart        # 改完 proxy.env 必须重启 proxy 才生效
 ```
+
+> `aikey env set` 只写 `proxy.env`、**不会动** `active.env`；以 merge-update 方式合并已有键值，不会全量覆盖。支持 `KEY=VAL`、多对组合、可带 `export` 前缀、分号分隔混合输入。如果当前 `proxy.env` 解析失败会停下来要求先修复。
 
 
 **删除数据重装:**
@@ -473,13 +506,13 @@ aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http
 # 危险：先全清，再装最新版（管道场景下走 /dev/tty 弹 y/N，可加 --yes 跳过）
 curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh -s -- --clear
 
-# 删除数据并安装指定版本
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/local-install.sh | sh -s -- --version v1.0.0-rc.3 --clear
+# 删除数据并安装指定版本（把 <TAG> 替换成想固定的版本，如 v1.0.0-rc.3）
+curl -fsSL https://github.com/aikeylabs/launch/releases/download/<TAG>/local-install.sh | sh -s -- --version <TAG> --clear
 ```
 
 
 **仅卸载（不重装）:**
 ```bash
 # 危险：清掉 ~/.aikey、第三方 CLI 注入、shell hook、OS keychain，但不重装
-curl -fsSL https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.3/uninstall.sh | sh -s -- --yes
+curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/uninstall.sh | sh -s -- --yes
 ```
