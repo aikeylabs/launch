@@ -213,10 +213,10 @@ claude        # or kimi / codex — depending on what you added to the Vault
 When the session ends, AiKey prints a **cost receipt** in the terminal — the session's token usage and estimated cost. No need to wait for the monthly invoice; cost stays in real-time view.
 
 > Claude CLI interactive session in a fresh terminal
-![alt text](assets/personal-step4-claude-interactive.png)
+![alt text](assets/personal-step4-claude-interactive-en.png)
 
 > Cost receipt printed in the terminal after claude exits (tokens used + estimated cost)
-![alt text](assets/personal-step4-cost-receipt.png)
+![alt text](assets/personal-step4-cost-receipt-en.png)
 
 ### 5. Switch keys (Web or CLI)
 
