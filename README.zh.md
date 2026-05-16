@@ -4,6 +4,8 @@
 
 > 把 Claude、Codex、Kimi 的 KEY、账号与路由统一管理，让团队在不中断工作的情况下切换额度、观察成本、编排多模型生产力。
 
+**官网：** [aikeylabs.com](https://aikeylabs.com)
+
 ## 让 AI 工具更像一个工作台
 
 - KEY 和账号只导入一次，Claude、Codex、Kimi、Cursor、OpenCode 都能接上。
@@ -103,6 +105,12 @@ aikey route work                # 复制指定 KEY 的 base_url + api_key
 **把多个 AI 账号，编排成一套可控路由。**
 
 > ✨ 操作走查 → [详细命令参考 · 在第三方 AI 客户端中使用 Key](#高级用法在第三方-ai-客户端中使用-key)
+
+### 6. 无缝衔接第三方 Agent
+
+第三方 Agent 永远不会接触到你的明文 KEY。当 Agent 通过 AiKey 调用 provider 时，真实的 Anthropic / OpenAI / Kimi 凭证依然留在 Vault —— 每个 Agent 的访问权限都在你的掌控之中：按 Agent 授予、按 Agent 撤销，Agent 配置里不再放任何真实 KEY 的副本。
+
+**明文 KEY 永不外泄。Agent 的访问权限始终显式、可撤销。**
 
 
 

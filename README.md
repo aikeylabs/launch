@@ -4,6 +4,8 @@
 
 > Unify keys, accounts, and routing for Claude, Codex, and Kimi — so your team can swap quotas, watch costs, and orchestrate multi-model productivity without breaking flow.
 
+**Website:** [aikeylabs.com](https://aikeylabs.com)
+
 ## Make AI tools feel like one workbench
 
 - Import keys and accounts once; reuse them across Claude, Codex, Kimi, Cursor, and OpenCode.
@@ -103,6 +105,12 @@ aikey route work                # Copy the base_url + api_key for a specific key
 **Compose multiple AI accounts into one controllable routing fabric.**
 
 > ✨ Walkthrough → [Reference · Use keys in third-party AI clients](#advanced-use-keys-in-third-party-ai-clients)
+
+### 6. Seamlessly plug in third-party agents
+
+Third-party agents never see your plaintext keys. When they call providers through AiKey, real Anthropic / OpenAI / Kimi credentials stay in the Vault — each agent's access stays under your control, granted per agent and revoked per agent, with no copies of real keys sitting in agent configs.
+
+**No plaintext keys ever leave the Vault. Agent access stays explicit and revocable.**
 
 
 
