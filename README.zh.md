@@ -112,6 +112,26 @@ aikey route work                # 复制指定 KEY 的 base_url + api_key
 
 **明文 KEY 永不外泄。Agent 的访问权限始终显式、可撤销。**
 
+### 7. 模型降智 / 网关劣化在你受影响之前先发现
+
+有时候 "claude-opus" 在网关里悄悄换成了便宜模型，或者上游质量不知不觉下滑。等到一批活儿跑得不对劲，token 已经花了，输出也已经写进了代码里。
+
+> `Trust Check` 基于流式 SSE 节奏指纹 + 按需触发的私有题库 cascade，为每个凭据打 0–100 分。页面按 Trusted / Suspect / Risky band 分组展示，每行支持一键重新验证，并保留最近 10 次 cascade 的详情。
+
+```bash
+# 安装时启用（默认关闭）
+curl -fsSL .../latest-install.sh | sh -s -- --with-degrade-detector
+
+aikey web                       # 侧边栏 → Quality → Trust Check
+aikey trust status              # CLI 等价命令
+```
+
+> **当前支持范围（MVP）**：Anthropic `claude-opus-4-7` 和 `claude-sonnet-4-6` 完整支持（L1 节奏 + 自带题库 L3 cascade）；其他 Claude 模型仅 L1 节奏（L3 暂时 `inconclusive`，等对应题库上线）；OpenAI / Kimi / Gemini 已在路线图。
+
+**让账单出来之前就察觉降智。**
+
+> ✨ 操作走查 → [可选：Trust Check（降智检测）](#可选trust-check降智检测)
+
 
 
 
@@ -252,6 +272,61 @@ aikey web                # 浏览器打开控制台 → Usage / Dashboard
 
 > aikey web 用量 / Usage Dashboard 主视图（token 趋势 + provider 分布）
 ![alt text](assets/personal-step6-usage-dashboard.png)
+
+---
+
+## 可选：Trust Check（降智检测）
+
+> 个人版完整流程的第 7 步 —— 仅当安装时带了 `--with-degrade-detector` 才相关（默认关闭）。没装可以跳过本节。
+
+✨ **承接亮点 7：模型降智 / 网关劣化在你受影响之前先发现**
+
+安装后 `trust-local` 服务监听在 `http://127.0.0.1:8801`，控制台侧边栏多出一项：**Quality → Trust Check**。
+
+```bash
+aikey web                       # 侧边栏 → Quality → Trust Check
+```
+
+页面里每个凭据展示：
+
+- **综合分 0–100**（Trusted ≥ 80, Suspect 60–79, Risky < 60）
+- 子分：**L1**（本地节奏指纹）/ **L2**（跨用户共识）/ **L3**（私有题库 cascade）
+- 行内 **Check** 按钮 —— 触发一次 L3 cascade（约 30 秒；每凭据 24h 限 1 次；429 之后行内出现 "Retry now"，点它会带 `force=true` 强制重跑）
+- 顶栏 **Run checks** —— 对当前可见的全部行串行依次跑
+- **BAND** tab —— 同样的行按 band 分组（Risky → Suspect → Trusted → Unverified，每段内按最近检测时间倒序）
+- 点击任意行 —— 右侧滑出抽屉，显示最近 10 次 cascade + 每题打分明细
+
+CLI 等价命令：
+
+```bash
+aikey trust status              # 列表（等价于页面表格）
+aikey trust verify <alias>      # 等价于行内 Check 按钮
+aikey trust history <alias>     # 等价于展开行的抽屉
+aikey trust sync                # 拉取最新基线 / 题库
+```
+
+### 当前支持范围（MVP）
+
+| Provider / model | 状态 |
+|---|---|
+| Anthropic —— `claude-opus-4-7`、`claude-sonnet-4-6` | ✅ 完整：L1 节奏指纹 + 内置题库 L3 cascade |
+| Anthropic —— 其他模型（如 `claude-haiku-4-5`） | 🟡 只有 L1 节奏；L3 返回 `inconclusive`，等对应题库 |
+| OpenAI / Kimi / Gemini / OpenAI 兼容网关 | ⏳ MVP 范围外 —— proxy observer 不打分，凭据照常使用，只是不出现 trust 分 |
+
+多协议支持已在路线图。难点不在代码 —— 不同协议的流式 SSE 节奏分布完全不同（Anthropic 每帧 1-3 token, OpenAI 每帧 1-2, Gemini 每帧 5-20），每加一种协议都得重新采集 1000+ 真实样本建独立基线。
+
+### 故障恢复："trust-local is offline"
+
+页面出现红色 offline 横幅，说明检测服务挂了。重启：
+
+```bash
+# macOS
+launchctl kickstart -k gui/$UID/aikey.trust-local
+# Linux
+systemctl --user restart aikey.trust-local
+# 或重新执行 detector 的安装脚本（幂等）：
+curl -fsSL https://raw.githubusercontent.com/aikeylabs/degrade-detector/main/scripts/install_service.sh | bash
+```
 
 ---
 
@@ -501,11 +576,18 @@ aikey env                  # 查看两份 env（敏感值自动遮罩；proxy.en
 **配出网代理（access github / provider 需要走梯子的场景）:**
 
 ```bash
-aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http://127.0.0.1:7890;export all_proxy=socks5://127.0.0.1:7890
+# 写法 A —— 空格分隔的 KEY=VALUE（最简洁）：
+aikey env set -- http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
+
+# 写法 B —— 直接粘 export 片段，但**整段必须用单引号包起来**：
+aikey env set -- 'export https_proxy=http://127.0.0.1:7890; export http_proxy=http://127.0.0.1:7890; export all_proxy=socks5://127.0.0.1:7890'
+
 aikey proxy restart        # 改完 proxy.env 必须重启 proxy 才生效
 ```
 
-> `aikey env set` 只写 `proxy.env`、**不会动** `active.env`；以 merge-update 方式合并已有键值，不会全量覆盖。支持 `KEY=VAL`、多对组合、可带 `export` 前缀、分号分隔混合输入。如果当前 `proxy.env` 解析失败会停下来要求先修复。
+> ⚠️ **常见踩坑**：如果不用 `'...'` 包起来，zsh/bash 会把每个 `;` 当成命令分隔符，只有第一个 `export` 传给 `aikey`，后面的 `export` 都在当前 shell 里执行了，根本没写进 `proxy.env`。事后再跑 `aikey env`，你会发现少掉的那几个变量出现在 "Shell env (inherited by proxy)" 段、而不在 "Proxy env" 段 —— 这就是诊断信号。
+
+> `aikey env set` 只写 `proxy.env`、**不会动** `active.env`；以 merge-update 方式合并已有键值，不会全量覆盖。支持 `KEY=VAL`、多对组合、可带 `export` 前缀、**用引号包住的**分号分隔混合输入。如果当前 `proxy.env` 解析失败会停下来要求先修复。
 
 
 **删除数据重装:**

@@ -112,6 +112,26 @@ Third-party agents never see your plaintext keys. When they call providers throu
 
 **No plaintext keys ever leave the Vault. Agent access stays explicit and revocable.**
 
+### 7. Spot model degradation before it hits your work
+
+Sometimes "claude-opus" silently routes to a cheaper model, or a gateway's quality quietly drops. By the time a batch run looks suspicious you've already burned tokens on bad output.
+
+> `Trust Check` scores every credential 0–100 from streaming-rhythm fingerprints plus an on-demand private-question cascade. The page surfaces Trusted / Suspect / Risky bands per credential, with one-click re-verification and a 10-run cascade history per row.
+
+```bash
+# Enable during install (opt-in, default OFF)
+curl -fsSL .../latest-install.sh | sh -s -- --with-degrade-detector
+
+aikey web                       # sidebar → Quality → Trust Check
+aikey trust status              # CLI equivalent
+```
+
+> **Current scope (MVP)**: full support for Anthropic `claude-opus-4-7` and `claude-sonnet-4-6` (L1 rhythm + L3 cascade with the official question bank); other Claude models get L1 rhythm only (L3 returns `inconclusive` until their question bank lands); OpenAI / Kimi / Gemini are on the roadmap.
+
+**Spot the degradation before the invoice does.**
+
+> ✨ Walkthrough → [Optional: Trust Check (degrade detection)](#optional-trust-check-degrade-detection)
+
 
 
 
@@ -263,6 +283,67 @@ The console surfaces per-key, per-account, per-protocol usage trends plus token 
 
 > aikey web Usage / Dashboard main view (token trend + provider distribution)
 ![alt text](assets/personal-step6-usage-dashboard.png)
+
+---
+
+## Optional: Trust Check (degrade detection)
+
+> Step 7 in the personal flow — only relevant if you installed with
+> `--with-degrade-detector` (default OFF). Skip this section otherwise.
+
+✨ **Delivers Highlight 7: spot model degradation before it hits your work**
+
+After install, the `trust-local` service runs on `http://127.0.0.1:8801`
+and the web console shows a new sidebar entry: **Quality → Trust Check**.
+
+```bash
+aikey web                       # sidebar → Quality → Trust Check
+```
+
+Per credential the page shows:
+
+- **Combined score 0–100** (Trusted ≥ 80, Suspect 60–79, Risky < 60)
+- Sub-scores **L1** (local rhythm fingerprint) / **L2** (cross-user quorum) / **L3** (cascade verify against private question bank)
+- Per-row **Check** button — kicks off an L3 cascade (~30 s; rate-limited to 1 run / 24 h / credential; the inline "Retry now" passes `force=true` to bypass)
+- Header **Run checks** — fires the same verify serially across every visible row
+- **BAND** tab — same rows grouped by trust band (Risky → Suspect → Trusted → Unverified, sorted by most-recent check inside each band)
+- Click any row — slide-over drawer with the last 10 cascade runs + per-question scoring detail
+
+CLI equivalents:
+
+```bash
+aikey trust status              # list mode (same as the page table)
+aikey trust verify <alias>      # = pressing "Check" on a row
+aikey trust history <alias>     # = expanding a row's drawer
+aikey trust sync                # pull fresh baseline / question bank
+```
+
+### Supported scope (MVP)
+
+| Provider / model | Status |
+|---|---|
+| Anthropic — `claude-opus-4-7`, `claude-sonnet-4-6` | ✅ Full: L1 rhythm fingerprint + L3 cascade against bundled question bank |
+| Anthropic — other models (e.g. `claude-haiku-4-5`) | 🟡 L1 rhythm only; L3 returns `inconclusive` until that model's question bank ships |
+| OpenAI / Kimi / Gemini / OpenAI-compatible gateways | ⏳ Out of MVP — the proxy observer skips scoring for these protocols, so credentials still work but won't carry a trust score |
+
+Multi-protocol support is on the roadmap. The harder part isn't the
+code — it's that each protocol's streaming-rhythm distribution is
+different (Anthropic 1-3 tokens/frame, OpenAI 1-2, Gemini 5-20), so
+each new protocol needs its own baseline collected from 1000+ real
+samples.
+
+### Recovery: "trust-local is offline"
+
+If the page shows the red offline banner, the service is dead. Restart:
+
+```bash
+# macOS
+launchctl kickstart -k gui/$UID/aikey.trust-local
+# Linux
+systemctl --user restart aikey.trust-local
+# Or re-run the bundled service installer (idempotent):
+curl -fsSL https://raw.githubusercontent.com/aikeylabs/degrade-detector/main/scripts/install_service.sh | bash
+```
 
 ---
 
@@ -514,11 +595,18 @@ aikey env                  # Show both env files (sensitive values masked; proxy
 **Behind an outbound proxy (e.g. github / providers unreachable without VPN):**
 
 ```bash
-aikey env set -- export https_proxy=http://127.0.0.1:7890;export http_proxy=http://127.0.0.1:7890;export all_proxy=socks5://127.0.0.1:7890
+# Option A — space-separated KEY=VALUE pairs (simplest):
+aikey env set -- http_proxy=http://127.0.0.1:7890 https_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
+
+# Option B — paste a shell-export snippet, but ALWAYS wrap in single quotes:
+aikey env set -- 'export https_proxy=http://127.0.0.1:7890; export http_proxy=http://127.0.0.1:7890; export all_proxy=socks5://127.0.0.1:7890'
+
 aikey proxy restart        # Required after editing proxy.env
 ```
 
-> `aikey env set` only writes `proxy.env` — it **does not** touch `active.env`. It merges into the existing file instead of replacing it, and accepts `KEY=VAL` pairs (multiple, optional `export` prefix, semicolon-separated). If the existing `proxy.env` is unparseable it stops and asks you to fix it first.
+> ⚠️ **Common pitfall**: without the surrounding `'...'`, your shell (zsh/bash) interprets every `;` as a command separator. Only the first `export` reaches `aikey`; the others run inside your current shell, never touching `proxy.env`. Running `aikey env` afterward will show the missing keys under "Shell env (inherited by proxy)" instead of "Proxy env" — that's the diagnostic signal.
+
+> `aikey env set` only writes `proxy.env` — it **does not** touch `active.env`. It merges into the existing file instead of replacing it, and accepts `KEY=VAL` pairs (multiple, optional `export` prefix, semicolon-separated **inside a quoted string**). If the existing `proxy.env` is unparseable it stops and asks you to fix it first.
 
 
 **Wipe data and reinstall:**
