@@ -119,11 +119,15 @@ Sometimes "claude-opus" silently routes to a cheaper model, or a gateway's quali
 > `Trust Check` scores every credential 0–100 from streaming-rhythm fingerprints plus an on-demand private-question cascade. The page surfaces Trusted / Suspect / Risky bands per credential, with one-click re-verification and a 10-run cascade history per row.
 
 ```bash
-# Enable during install (opt-in, default OFF)
-curl -fsSL .../latest-install.sh | sh -s -- --with-degrade-detector
+# Default ON since rc.5 — the standard install already bundles trust-local
+curl -fsSL .../latest-install.sh | sh
 
 aikey web                       # sidebar → Quality → Trust Check
 aikey trust status              # CLI equivalent
+
+# Opt out
+curl -fsSL .../latest-install.sh | sh -s -- --no-degrade-detector   # skip install-time
+aikey app uninstall degrade-detector                                # remove post-install (reversible)
 ```
 
 > **Current scope (MVP)**: full support for Anthropic `claude-opus-4-7` and `claude-sonnet-4-6` (L1 rhythm + L3 cascade with the official question bank); other Claude models get L1 rhythm only (L3 returns `inconclusive` until their question bank lands); OpenAI / Kimi / Gemini are on the roadmap.
@@ -286,15 +290,22 @@ The console surfaces per-key, per-account, per-protocol usage trends plus token 
 
 ---
 
-## Optional: Trust Check (degrade detection)
+## Trust Check (degrade detection)
 
-> Step 7 in the personal flow — only relevant if you installed with
-> `--with-degrade-detector` (default OFF). Skip this section otherwise.
+> Step 7 in the personal flow — **installed by default since rc.5**.
+> If you ran the install with `--no-degrade-detector`, skip this section
+> or run `aikey app install degrade-detector` to add it back.
 
 ✨ **Delivers Highlight 7: spot model degradation before it hits your work**
 
-After install, the `trust-local` service runs on `http://127.0.0.1:8801`
-and the web console shows a new sidebar entry: **Quality → Trust Check**.
+After the standard install, the `trust-local` service runs on
+`http://127.0.0.1:8801` and the web console shows a new sidebar entry:
+**Quality → Trust Check**.
+
+> **Realtime detection toggle stays OFF by default**: the service is
+> installed but doesn't score chat traffic until you click the toggle
+> in `/user/trust-check` (top-right). Manual `Check` button always
+> works regardless of the toggle.
 
 ```bash
 aikey web                       # sidebar → Quality → Trust Check
@@ -343,6 +354,16 @@ launchctl kickstart -k gui/$UID/aikey.trust-local
 systemctl --user restart aikey.trust-local
 # Or re-run the bundled service installer (idempotent):
 curl -fsSL https://raw.githubusercontent.com/aikeylabs/degrade-detector/main/scripts/install_service.sh | bash
+```
+
+### Removing Trust Check
+
+Want a clean uninstall (e.g. don't need degrade detection on this
+machine)? One command stops the service, removes the binary, and
+wipes the vault rows — reversible via `aikey app install` later:
+
+```bash
+aikey app uninstall degrade-detector
 ```
 
 ---

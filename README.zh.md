@@ -119,11 +119,15 @@ aikey route work                # 复制指定 KEY 的 base_url + api_key
 > `Trust Check` 基于流式 SSE 节奏指纹 + 按需触发的私有题库 cascade，为每个凭据打 0–100 分。页面按 Trusted / Suspect / Risky band 分组展示，每行支持一键重新验证，并保留最近 10 次 cascade 的详情。
 
 ```bash
-# 安装时启用（默认关闭）
-curl -fsSL .../latest-install.sh | sh -s -- --with-degrade-detector
+# rc.5 起默认开启 —— 标准安装命令已经自带 trust-local
+curl -fsSL .../latest-install.sh | sh
 
 aikey web                       # 侧边栏 → Quality → Trust Check
 aikey trust status              # CLI 等价命令
+
+# 不需要 / 想卸载
+curl -fsSL .../latest-install.sh | sh -s -- --no-degrade-detector   # 安装时跳过
+aikey app uninstall degrade-detector                                 # 装完之后卸载（可逆）
 ```
 
 > **当前支持范围（MVP）**：Anthropic `claude-opus-4-7` 和 `claude-sonnet-4-6` 完整支持（L1 节奏 + 自带题库 L3 cascade）；其他 Claude 模型仅 L1 节奏（L3 暂时 `inconclusive`，等对应题库上线）；OpenAI / Kimi / Gemini 已在路线图。
@@ -275,13 +279,19 @@ aikey web                # 浏览器打开控制台 → Usage / Dashboard
 
 ---
 
-## 可选：Trust Check（降智检测）
+## Trust Check（降智检测）
 
-> 个人版完整流程的第 7 步 —— 仅当安装时带了 `--with-degrade-detector` 才相关（默认关闭）。没装可以跳过本节。
+> 个人版完整流程的第 7 步 —— **rc.5 起默认安装**。如果你装的时候带了
+> `--no-degrade-detector`,可以跳过本节,或者跑 `aikey app install
+> degrade-detector` 重新加上。
 
 ✨ **承接亮点 7：模型降智 / 网关劣化在你受影响之前先发现**
 
-安装后 `trust-local` 服务监听在 `http://127.0.0.1:8801`，控制台侧边栏多出一项：**Quality → Trust Check**。
+标准安装之后 `trust-local` 服务监听在 `http://127.0.0.1:8801`，控制台侧边栏多出一项：**Quality → Trust Check**。
+
+> **实时检测 toggle 默认 OFF**:服务装了,但默认不对聊天流量打分,
+> 直到你在 `/user/trust-check` 右上角点开关。手动 `Check` 按钮一直
+> 可用,不受 toggle 影响。
 
 ```bash
 aikey web                       # 侧边栏 → Quality → Trust Check
@@ -326,6 +336,15 @@ launchctl kickstart -k gui/$UID/aikey.trust-local
 systemctl --user restart aikey.trust-local
 # 或重新执行 detector 的安装脚本（幂等）：
 curl -fsSL https://raw.githubusercontent.com/aikeylabs/degrade-detector/main/scripts/install_service.sh | bash
+```
+
+### 卸载 Trust Check
+
+不需要降智检测了?一条命令清理干净 —— 停服务、删 binary、清 vault 行,
+随时可以 `aikey app install` 装回来:
+
+```bash
+aikey app uninstall degrade-detector
 ```
 
 ---
