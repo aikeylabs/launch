@@ -1,15 +1,15 @@
 {
   "schema_version": "2",
   "slug": "degrade-detector",
-  "version": "v1.0.0-rc.5.1",
+  "version": "__RELEASE_TAG__",
   "service_installers": {
     "unix": {
       "kind": "curl-pipe-shell",
-      "url": "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.5.1/install_service.sh"
+      "url": "https://github.com/aikeylabs/launch/releases/download/__RELEASE_TAG__/install_service.sh"
     },
     "windows": {
       "kind": "powershell-iwr-iex",
-      "url": "https://github.com/aikeylabs/launch/releases/download/v1.0.0-rc.5.1/install_service.ps1"
+      "url": "https://github.com/aikeylabs/launch/releases/download/__RELEASE_TAG__/install_service.ps1"
     }
   },
   "doc_url": "https://github.com/aikeylabs/launch"
