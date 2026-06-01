@@ -1,0 +1,16 @@
+{
+  "schema_version": "2",
+  "slug": "ai-compliance-detector",
+  "version": "__RELEASE_TAG__",
+  "service_installers": {
+    "unix": {
+      "kind": "curl-pipe-shell",
+      "url": "https://github.com/aikeylabs/launch/releases/download/__RELEASE_TAG__/ai-compliance-detector_install_service.sh"
+    },
+    "windows": {
+      "kind": "powershell-iwr-iex",
+      "url": "https://github.com/aikeylabs/launch/releases/download/__RELEASE_TAG__/ai-compliance-detector_install_service.ps1"
+    }
+  },
+  "doc_url": "https://github.com/aikeylabs/ai-compliance-detector"
+}
