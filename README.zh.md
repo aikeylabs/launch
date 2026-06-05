@@ -335,7 +335,7 @@ launchctl kickstart -k gui/$UID/aikey.trust-local
 # Linux
 systemctl --user restart aikey.trust-local
 # 或重新执行 detector 的安装脚本（幂等）：
-curl -fsSL https://raw.githubusercontent.com/aikeylabs/degrade-detector/main/scripts/install_service.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aikeylabs/ai-degrade-detector/main/scripts/install_service.sh | bash
 ```
 
 ### 卸载 Trust Check

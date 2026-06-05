@@ -353,7 +353,7 @@ launchctl kickstart -k gui/$UID/aikey.trust-local
 # Linux
 systemctl --user restart aikey.trust-local
 # Or re-run the bundled service installer (idempotent):
-curl -fsSL https://raw.githubusercontent.com/aikeylabs/degrade-detector/main/scripts/install_service.sh | bash
+curl -fsSL https://raw.githubusercontent.com/aikeylabs/ai-degrade-detector/main/scripts/install_service.sh | bash
 ```
 
 ### Removing Trust Check
