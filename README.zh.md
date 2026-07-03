@@ -577,7 +577,7 @@ aikey hook install
 重新安装 = 升级，直接运行:
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/local-install.sh | sh
+curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh
 
 ```
 

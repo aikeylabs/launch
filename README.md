@@ -599,7 +599,7 @@ This appends a single marker block to `$PROFILE.CurrentUserAllHosts`
 Reinstall = upgrade. Just run:
 
 ```bash
-curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/local-install.sh | sh
+curl -fsSL https://github.com/aikeylabs/launch/releases/latest/download/latest-install.sh | sh
 ```
 
 **Environment management (`aikey env` / `ak env`):**
