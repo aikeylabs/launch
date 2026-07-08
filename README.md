@@ -613,7 +613,7 @@ AiKey keeps two env files:
 aikey env                  # Show both env files (sensitive values masked; proxy.env shows entry count + config hash)
 ```
 
-`aikey env` also shows **"Upstream proxy egress (running daemon)"** — the live, layer-by-layer egress decision fetched from the running proxy: 1. user-set upstream proxy (web Settings) > 2. the daemon's own env vars > 3. the OS system proxy (auto-detected on macOS/Windows, refreshed live), plus the final effective proxy for AI providers. This reflects what the daemon **actually uses** (its env is captured at spawn and usually differs from your shell). If the proxy isn't running, the section says so and how to start it.
+`aikey env` also shows **"Upstream proxy egress (running daemon)"** — the live, layer-by-layer egress decision fetched from the running proxy: 1. user-set upstream proxy (web Settings) > 2. explicit `proxy.env` config > 3. the OS system proxy (auto-detected on macOS/Windows, refreshed live) > 4. shell-inherited env vars (fallback only — your `.zshrc` exports do **not** pin the egress; a system-proxy change still applies automatically), plus the final effective proxy for AI providers. This reflects what the daemon **actually uses** (its env is captured at spawn and usually differs from your shell). If the proxy isn't running, the section says so and how to start it.
 
 **Behind an outbound proxy (e.g. github / providers unreachable without VPN):**
 

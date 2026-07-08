@@ -592,7 +592,7 @@ AiKey 维护两份 env：
 aikey env                  # 查看两份 env（敏感值自动遮罩；proxy.env 显示条目数+配置哈希）
 ```
 
-`aikey env` 还会显示 **"Upstream proxy egress (running daemon)"** 段 —— 从运行中的 proxy 实时取回的出站代理逐级决策：1. 用户设置的上游代理（web Settings）> 2. daemon 进程自己的环境变量 > 3. OS 系统代理（macOS/Windows 自动探测、实时刷新），以及最终对 AI 服务商生效的代理。这里显示的是 daemon **实际在用**的值（daemon 的 env 是启动时的快照，通常和你当前 shell 不一样）。proxy 没在跑时该段会提示如何启动。
+`aikey env` 还会显示 **"Upstream proxy egress (running daemon)"** 段 —— 从运行中的 proxy 实时取回的出站代理逐级决策：1. 用户设置的上游代理（web Settings）> 2. `proxy.env` 显式配置 > 3. OS 系统代理（macOS/Windows 自动探测、实时刷新）> 4. shell 继承的环境变量（仅兜底 —— `.zshrc` 里的 export **不会**钉死出口，系统代理变化仍会自动跟随），以及最终对 AI 服务商生效的代理。这里显示的是 daemon **实际在用**的值（daemon 的 env 是启动时的快照，通常和你当前 shell 不一样）。proxy 没在跑时该段会提示如何启动。
 
 **配出网代理（access github / provider 需要走梯子的场景）:**
 
