@@ -456,9 +456,36 @@ aikey env               # View active.env (shell-facing) and proxy.env (aikey-pr
 aikey env set KEY=VAL   # Merge-write proxy.env (e.g. https_proxy / http_proxy)
 aikey doctor            # One-click health check
 aikey test --all        # Probe every credential in the vault (see below)
+aikey hook uninstall    # Stop the takeover: restore shell + third-party CLI configs (see below)
 ```
 
 > Tip: the installer also creates an `ak` symlink to `aikey`. Every command works under the short alias (e.g. `ak env`, `ak use`, `ak doctor`).
+
+---
+
+## Stop the Takeover (restore shell & third-party CLI configs)
+
+"Takeover" is what the install-hook enables: aikey routes `claude` / `codex` / `kimi` / Claude Desktop through the currently active key. To undo it, one command:
+
+```bash
+aikey hook uninstall
+```
+
+It does three things — each idempotent, each backed up before touching anything:
+
+1. **Shell wiring**: strips the aikey marker block from every shell startup file (`~/.zshrc`, `~/.bashrc`, `~/.bash_profile`, PowerShell profile), backing up each file it edits. The `~/.aikey/hook.*` files are kept, so `aikey hook install` can re-wire at any time.
+2. **codex / kimi configs**: their aikey-routed config sections only work WITH the hook env, so uninstall reconciles them too — interactive terminals get a prompt to strip the aikey-managed region; non-interactive runs get a loud warning instead of a silent trap.
+3. **Claude Desktop**: restored to the official direct-connect config. Desktop reads a persisted config file, not env vars — left un-restored it would break silently once the proxy stops, with nothing to diagnose in the GUI.
+
+Boundaries and companion commands:
+
+```bash
+aikey deactivate          # Restore env vars in THIS terminal immediately (new terminals no longer load the hook anyway)
+export AIKEY_NO_HOOK=1    # Temporary bypass without uninstalling: aikey skips hook actions for this session
+aikey hook install        # Changed your mind? Re-wire any time.
+```
+
+> Already-open terminals keep the env vars they have until you open a new one — a running `claude` session is never interrupted.
 
 ---
 

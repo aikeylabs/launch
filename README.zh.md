@@ -436,9 +436,36 @@ aikey env               # 查看 active.env (shell 注入) 和 proxy.env (proxy 
 aikey env set KEY=VAL   # 合并写入 proxy.env，常用于配 https_proxy / http_proxy
 aikey doctor            # 一键自检
 aikey test --all        # vault 里所有 Key 全量体检（见下）
+aikey hook uninstall    # 取消接管：还原 shell 与第三方 CLI 配置（见下）
 ```
 
 > 提示：安装器会同时把 `aikey` 软链一份成 `ak`，所有命令都可以用短别名调用（如 `ak env`、`ak use`、`ak doctor`）。
+
+---
+
+## 取消接管（还原 shell 与第三方 CLI 配置）
+
+「接管」指的是安装 hook 后，aikey 让 `claude` / `codex` / `kimi` / Claude Desktop 自动走当前 active 的 KEY 路由。不想继续时，一条命令还原：
+
+```bash
+aikey hook uninstall
+```
+
+这条命令做三件事，每一步都幂等、改动前自动备份：
+
+1. **shell 接线**：从所有 shell 启动文件（`~/.zshrc`、`~/.bashrc`、`~/.bash_profile`、PowerShell profile）移除 aikey 标记块（每个改动的文件先备份到旁边）。`~/.aikey/hook.*` 文件本身保留，之后 `aikey hook install` 可随时重新接管。
+2. **codex / kimi 配置**：这两个 CLI 走 aikey 路由的配置只有配合 hook 环境变量才能工作，卸载时一并对账——交互终端会询问是否移除 aikey 托管的配置段，脚本等非交互场景会明确警告而不是静默留坑。
+3. **Claude Desktop**：还原为官方直连配置。Desktop 读的是落盘配置而非环境变量，不还原的话 proxy 停止后它会静默不可用且无从排查。
+
+生效边界与配套命令：
+
+```bash
+aikey deactivate          # 当前终端立即还原环境变量（新终端本来就不会再加载）
+export AIKEY_NO_HOOK=1    # 只想临时绕过、不卸载：本会话内 aikey 跳过 hook 相关动作
+aikey hook install        # 反悔了？随时重新接管
+```
+
+> 已经打开的终端会保留手头的环境变量直到你开新终端——正在运行的 `claude` 会话不会被打断。
 
 ---
 
