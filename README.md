@@ -134,7 +134,7 @@ aikey app uninstall degrade-detector                                # remove pos
 
 **Spot the degradation before the invoice does.**
 
-> ✨ Walkthrough → [Optional: Trust Check (degrade detection)](#optional-trust-check-degrade-detection)
+> ✨ Walkthrough → [Trust Check (degrade detection)](#trust-check-degrade-detection)
 
 
 
@@ -474,6 +474,36 @@ Each row runs **Ping(D) → Ping(proxy) → API → Chat** in sequence. Multi-pr
 
 ---
 
+## Undoing the Takeover (restore your shell and third-party CLI config)
+
+"Takeover" means: once the hook is installed, aikey makes `claude` / `codex` / `kimi` / Claude Desktop route through whichever key is currently active. The takeover only ever happens with your consent — before writing anything, aikey shows you the exact block it wants to add to your shell config:
+
+![The "enable terminal takeover?" dialog, showing the hook snippet before it is written](assets/hook-01-terminal-takeover-consent.png)
+
+To stop, one command restores everything:
+
+```bash
+aikey hook uninstall
+```
+
+It does three things, each idempotent and each backing up before it changes anything:
+
+1. **Shell wiring** — removes the aikey marker block from every shell startup file (`~/.zshrc`, `~/.bashrc`, `~/.bash_profile`, the PowerShell profile), backing each modified file up alongside itself. The `~/.aikey/hook.*` files themselves are kept, so `aikey hook install` can take over again at any time.
+2. **codex / kimi config** — the aikey routing config for these two CLIs only works together with the hook's environment variables, so it is reconciled at the same time. An interactive terminal asks whether to remove the aikey-managed sections; non-interactive contexts (scripts) warn explicitly rather than leaving a silent trap.
+3. **Claude Desktop** — restored to its official direct-connection config. Desktop reads config from disk rather than from environment variables, so leaving it pointed at a stopped proxy would make it silently unusable with nothing to debug.
+
+Scope and companion commands:
+
+```bash
+aikey deactivate          # Restore env vars in THIS terminal right now (new terminals never load them again)
+export AIKEY_NO_HOOK=1    # Just bypass temporarily without uninstalling: aikey skips all hook actions in this session
+aikey hook install        # Changed your mind? Take over again anytime
+```
+
+> Terminals that are already open keep the environment variables they have until you open a new one — a running `claude` session is never interrupted.
+
+---
+
 ## Advanced: Temporary Key Switching
 
 Use `aikey activate` to temporarily switch the active key in the current terminal only. Unlike `aikey use`, it does **not** modify global settings or `active.env` — closing the terminal reverts everything.
@@ -515,9 +545,42 @@ Example output:
 
 Paste `base_url` and `api_key` into your client settings. The proxy routes requests by token — real credentials stay in the vault.
 
-### OpenCode
+### OpenCode, end to end
 
-Create or edit `~/.config/opencode/opencode.jsonc`:
+**1) Get a key in place** — your own API key via [Use Your Own API Key](#use-your-own-api-key) (worth doing first the very first time), or a team key via `aikey login`.
+
+**2) Read the route address**
+
+```bash
+aikey route                     # List all route tokens
+aikey route my-key              # Show copy-paste config for a specific key
+```
+
+The `base_url` in the output is what OpenCode needs, e.g. `http://127.0.0.1:27200/openai`.
+
+**3) Create or edit `~/.config/opencode/opencode.jsonc`**
+
+OpenAI:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "openai": {
+      "options": {
+        // ⚠ OpenCode quirk: you must append "/v1" to baseURL yourself
+        "baseURL": "http://127.0.0.1:27200/openai/v1",
+        // Hard-code this sentinel — it means "whichever key is active right now",
+        // so switching active in the web UI or CLI takes effect without editing this file
+        "apiKey": "aikey_active_openai"
+      }
+    }
+  },
+  "model": "openai/gpt-5"
+}
+```
+
+Anthropic:
 
 ```jsonc
 {
@@ -526,6 +589,7 @@ Create or edit `~/.config/opencode/opencode.jsonc`:
     "anthropic": {
       "options": {
         "baseURL": "http://127.0.0.1:27200/anthropic/v1",
+        "apiKey": "aikey_active_anthropic"
       }
     }
   },
@@ -533,7 +597,39 @@ Create or edit `~/.config/opencode/opencode.jsonc`:
 }
 ```
 
-Pick the official `anthropic` provider, point `baseURL` at the local proxy, then enter the API key shown by `aikey route my-key` in OpenCode.
+Pick the official `openai` / `anthropic` provider and point `baseURL` at the local proxy.
+
+> **What `aikey_active_<provider>` is**: the local proxy recognises this family of sentinel values and resolves them to whichever key you selected with `aikey use`. The point is that **no real credential is ever written into the client's config file**, and switching the active key needs no client-side change. The available suffixes follow the providers the proxy supports (`anthropic` / `openai` / `google` / `kimi` / `deepseek`, …); an unknown provider name is rejected outright rather than silently downgraded.
+
+> ⚠ **If OpenCode stored a key earlier, clear it** — otherwise it wins over the config above:
+>
+> ```bash
+> rm ~/.local/share/opencode/auth.json
+> ```
+
+**4) Verify**
+
+The three responses you are most likely to see when something is misconfigured:
+
+![OpenCode errors: wrong API key / quota exceeded / wrong model version](assets/opencode-01-troubleshooting.png)
+
+- `Incorrect API key provided` — `apiKey` is wrong, or the sentinel's provider suffix does not match `baseURL`.
+- `Quota exceeded` — this key is out of quota; `aikey use` another one.
+- Replies work but the model is wrong — pick the model version in the bottom-left selector.
+
+### Claude Desktop takeover
+
+> ⚠ **Once Claude Desktop is taken over, only OAuth accounts are supported** upstream (`aikey use <claude_account>`), not API keys.
+
+When aikey detects Claude Desktop on the machine it asks once — **only after you agree** does aikey rewrite its deployment config so that its model inference also routes through aikey (effective after you restart Desktop). Chat sign-in still goes through the official claude.ai channel.
+
+![The "also take over Claude Desktop?" confirmation dialog](assets/claude-desktop-01-takeover-confirm.png)
+
+Claude Desktop on Windows 10 after takeover — the bottom-left shows it running through the Gateway:
+
+![Claude Desktop (Windows 10) routing through aikey](assets/claude-desktop-02-win10-in-use.png)
+
+To confirm the takeover actually happened, run `aikey env` and look for a `claude-desktop` line under **Injected provider configs** (see the [`aikey env` section](#windows-specific)).
 
 ---
 
@@ -612,6 +708,19 @@ AiKey keeps two env files:
 ```bash
 aikey env                  # Show both env files (sensitive values masked; proxy.env shows entry count + config hash)
 ```
+
+`aikey env` also prints an **"Upstream proxy egress (running daemon)"** section — the outbound-proxy decision ladder, read live from the running proxy:
+
+1. The upstream proxy set by the user (web Settings)
+2. An explicit setting in `proxy.env`
+3. The OS system proxy (auto-detected and refreshed live on macOS / Windows)
+4. Shell-inherited environment variables (**fallback only** — an `export` in `.zshrc` does **not** pin the egress; system-proxy changes are still followed)
+
+…plus which one is actually in effect for AI providers.
+
+![aikey env: the Upstream proxy egress ladder and Injected provider configs](assets/aikey-env-upstream-egress.png)
+
+What it shows is the value the **daemon is really using**: the daemon's env is a snapshot from when it started, usually different from your current shell. So "I set it in my shell" and "where the proxy actually goes" are two different questions, and this section answers the second one. If the proxy is not running, the section tells you how to start it.
 
 **Behind an outbound proxy (e.g. github / providers unreachable without VPN):**
 

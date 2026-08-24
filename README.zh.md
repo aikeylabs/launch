@@ -134,7 +134,7 @@ aikey app uninstall degrade-detector                                 # 装完之
 
 **让账单出来之前就察觉降智。**
 
-> ✨ 操作走查 → [可选：Trust Check（降智检测）](#可选trust-check降智检测)
+> ✨ 操作走查 → [Trust Check（降智检测）](#trust-check降智检测)
 
 
 
@@ -454,6 +454,36 @@ aikey test --all          # vault 里所有 Key (personal / team / OAuth) 全量
 
 ---
 
+## 取消接管（还原 shell 与第三方 CLI 配置）
+
+「接管」指的是安装 hook 后，aikey 让 `claude` / `codex` / `kimi` / Claude Desktop 自动走当前 active 的 KEY 路由。接管**永远是你点头才发生的** —— 装 hook 前会把要写进 shell 配置的那一段完整展示给你确认：
+
+![「开启终端接管?」确认弹窗：先展示要写入的 hook 片段](assets/hook-01-terminal-takeover-consent.png)
+
+不想继续时，一条命令还原：
+
+```bash
+aikey hook uninstall
+```
+
+这条命令做三件事，每一步都幂等、改动前自动备份：
+
+1. **shell 接线**：从所有 shell 启动文件（`~/.zshrc`、`~/.bashrc`、`~/.bash_profile`、PowerShell profile）移除 aikey 标记块（每个改动的文件先备份到旁边）。`~/.aikey/hook.*` 文件本身保留，之后 `aikey hook install` 可随时重新接管。
+2. **codex / kimi 配置**：这两个 CLI 走 aikey 路由的配置只有配合 hook 环境变量才能工作，卸载时一并对账 —— 交互终端会询问是否移除 aikey 托管的配置段，脚本等非交互场景会明确警告而不是静默留坑。
+3. **Claude Desktop**：还原为官方直连配置。Desktop 读的是**落盘配置**而非环境变量，不还原的话 proxy 停止后它会静默不可用且无从排查。
+
+生效边界与配套命令：
+
+```bash
+aikey deactivate          # 当前终端立即还原环境变量（新终端本来就不会再加载）
+export AIKEY_NO_HOOK=1    # 只想临时绕过、不卸载：本会话内 aikey 跳过 hook 相关动作
+aikey hook install        # 反悔了？随时重新接管
+```
+
+> 已经打开的终端会保留手头的环境变量直到你开新终端 —— 正在运行的 `claude` 会话不会被打断。
+
+---
+
 ## 高级用法：临时切换 Key
 
 使用 `aikey activate` 在当前终端临时切换 Key。与 `aikey use` 不同，它**不会**修改全局设置或 active.env — 关闭终端即恢复。
@@ -495,9 +525,42 @@ aikey route my-key              # 查看指定 key 的可粘贴配置
 
 将 `base_url` 和 `api_key` 粘贴到客户端设置中。代理通过 token 路由请求 — 真实凭证始终保留在 vault 中。
 
-### OpenCode
+### OpenCode 接入案例
 
-创建或编辑 `~/.config/opencode/opencode.jsonc`：
+**1) 先把 KEY 准备好** —— 自己的 API Key 走 [使用个人 API Key](#使用个人-api-key)（第一次用建议先走通这条路）；团队下发的 KEY 走 `aikey login` 连控制台领取。
+
+**2) 取路由地址**
+
+```bash
+aikey route                     # 列出所有路由 token
+aikey route my-key              # 查看指定 key 的可粘贴配置
+```
+
+输出里的 `base_url` 就是要填给 OpenCode 的地址，例如 `http://127.0.0.1:27200/openai`。
+
+**3) 创建或编辑 `~/.config/opencode/opencode.jsonc`**
+
+OpenAI：
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "openai": {
+      "options": {
+        // ⚠ OpenCode 有个特殊性：baseURL 要手动补 "/v1" 后缀
+        "baseURL": "http://127.0.0.1:27200/openai/v1",
+        // 写死这个哨兵值即可 —— 它代表"当前激活的那把 KEY"，
+        // 之后在 web / CLI 里切换 active，新 KEY 自动生效，不用回来改配置
+        "apiKey": "aikey_active_openai"
+      }
+    }
+  },
+  "model": "openai/gpt-5"
+}
+```
+
+Anthropic：
 
 ```jsonc
 {
@@ -506,6 +569,7 @@ aikey route my-key              # 查看指定 key 的可粘贴配置
     "anthropic": {
       "options": {
         "baseURL": "http://127.0.0.1:27200/anthropic/v1",
+        "apiKey": "aikey_active_anthropic"
       }
     }
   },
@@ -513,7 +577,41 @@ aikey route my-key              # 查看指定 key 的可粘贴配置
 }
 ```
 
-Provider 选择官方 `anthropic`，`baseURL` 指向本地代理，然后在 OpenCode 中填入 `aikey route my-key` 显示的 API Key 即可使用。
+Provider 选官方的 `openai` / `anthropic`，`baseURL` 指向本地代理。
+
+> **`aikey_active_<provider>` 是什么**：本地代理认得这一族哨兵值，把它解析成你当前 `aikey use` 选中的那把 KEY。好处是**配置文件里不留任何真实凭证**，切换 active 也不用改客户端。可用的后缀跟随代理支持的 provider（`anthropic` / `openai` / `google` / `kimi` / `deepseek` …）；写错 provider 名不会静默降级，请求会直接被拒。
+
+> ⚠ **如果 OpenCode 之前存过 key，要一并清掉**，否则它会优先用旧的那把：
+>
+> ```bash
+> rm ~/.local/share/opencode/auth.json
+> ```
+
+**4) 跑起来验证**
+
+配错时 OpenCode 里最常见的三种回显，照着对号入座：
+
+![OpenCode 常见报错：API Key 不正确 / 额度不足 / 模型版本选错](assets/opencode-01-troubleshooting.png)
+
+- `Incorrect API key provided` —— `apiKey` 写错了，或哨兵值的 provider 后缀和 `baseURL` 不是同一个。
+- `Quota exceeded` —— 这把 KEY 的额度用完了，`aikey use` 换一把再试。
+- 回复正常但模型不对 —— 在左下角把模型版本选成你想要的那个。
+
+### Claude Desktop 接管
+
+> ⚠ **接管 Claude Desktop 后，上游只支持 OAuth 账号**（`aikey use <claude_account>`），不支持 API Key 方式。
+
+aikey 检测到本机装了 Claude Desktop 时，会弹一次确认 —— **同意后 aikey 才会改写它的部署配置**，让它的模型推理也经由 aikey 路由（重启 Desktop 后生效）。聊天登录仍然走 claude.ai 官方通道，不受影响。
+
+![「同时接管 Claude Desktop?」确认弹窗](assets/claude-desktop-01-takeover-confirm.png)
+
+接管后 Claude Desktop 在 Windows 10 上的实际效果 —— 左下角显示走的是 Gateway：
+
+![Claude Desktop（Windows 10）经 aikey 路由工作](assets/claude-desktop-02-win10-in-use.png)
+
+想确认到底接管上了没有，跑 `aikey env` 看末尾的 **Injected provider configs** 段有没有 `claude-desktop` 那一行（见[下方 `aikey env` 一节](#windows-专属)）。
+
+> 不想再接管时用 [`aikey hook uninstall`](#取消接管还原-shell-与第三方-cli-配置) 一键还原为官方直连配置 —— Desktop 读的是落盘配置，不还原的话 proxy 一停它会静默不可用。
 
 ---
 
@@ -591,6 +689,19 @@ AiKey 维护两份 env：
 ```bash
 aikey env                  # 查看两份 env（敏感值自动遮罩；proxy.env 显示条目数+配置哈希）
 ```
+
+`aikey env` 还会显示 **"Upstream proxy egress (running daemon)"** 段 —— 从**运行中的** proxy 实时取回的出站代理逐级决策：
+
+1. 用户在 web Settings 里设的上游代理
+2. `proxy.env` 里的显式配置
+3. OS 系统代理（macOS / Windows 自动探测、实时刷新）
+4. shell 继承的环境变量（**仅兜底** —— `.zshrc` 里的 export **不会**钉死出口，系统代理变化仍会自动跟随）
+
+以及最终对 AI 服务商生效的那一个。
+
+![aikey env：Upstream proxy egress 逐级决策 + Injected provider configs](assets/aikey-env-upstream-egress.png)
+
+这里显示的是 **daemon 实际在用的值**：daemon 的 env 是它启动那一刻的快照，通常和你当前 shell 不一样，所以「我 shell 里明明设了」和「代理实际走哪」是两个问题，这一段专门回答后者。proxy 没在跑时该段会提示如何启动。
 
 **配出网代理（access github / provider 需要走梯子的场景）:**
 
